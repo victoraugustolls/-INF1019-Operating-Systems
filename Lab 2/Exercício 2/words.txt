@@ -1,0 +1,5 @@
+ceu 1
+humor 1
+Irene 6
+Pedro 1
+boa 1
