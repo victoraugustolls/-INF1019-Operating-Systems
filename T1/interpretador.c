@@ -23,11 +23,14 @@ int main(int argc, char const *argv[])
 {
 
     FILE *commandsFile;
+
     char priority[2];
     char programPath[20];
+
     int j = 1;
     int shouldRewind = 1;
     int type = 0;
+
 	pid_t schedulerPid;
 
     char pathBuffer[BUFFER_SIZE][PATH_SIZE];
@@ -71,6 +74,7 @@ int main(int argc, char const *argv[])
         printf("%s\n", buffer[i]);
         // printf("%s\n", priorityBuffer[i]);
     }
+    buffer[j] = NULL;
 
     if (type)
     {
@@ -87,7 +91,6 @@ int main(int argc, char const *argv[])
             for (int i = 0; i < j; i++)
             {
                 printf("%s\n", buffer[i]);
-                // buffer[i] = pathBuffer[i];
             }
             execv("SchedulerRR", buffer);
         }

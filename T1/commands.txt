@@ -1,2 +1,2 @@
-exec ./Test1
-exec ./Test2
+exec Test1
+exec Test2
