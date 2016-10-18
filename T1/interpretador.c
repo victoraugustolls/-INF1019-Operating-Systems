@@ -10,6 +10,7 @@
 
 #define BUFFER_SIZE 200
 #define PATH_SIZE 20
+#define PRIORITY_SIZE 2
 
 #define PROGRAM_FILE "commands.txt"
 
@@ -18,16 +19,15 @@ int main(int argc, char const *argv[])
 
     FILE *commandsFile;
 
-    char priority[2];
-    char programPath[20];
+    char priority[PRIORITY_SIZE];
+    char programPath[PATH_SIZE];
+    char *buffer[BUFFER_SIZE];
 
-    int j = 1;
+    int j = 1; //Buffer index
     int shouldRewind = 1;
     int type = 0;
 
 	pid_t schedulerPid;
-
-    char *buffer[BUFFER_SIZE];
 
     //Read file
     commandsFile = fopen(PROGRAM_FILE, "r");
@@ -38,7 +38,12 @@ int main(int argc, char const *argv[])
     }
     while (fscanf(commandsFile, "exec %s prioridade=%s\n", programPath, priority) == 2) //Priority
     {
-        printf("Type: 0 | Path: %s | Priority: %s\n", programPath, priority);
+        printf("Type: 0 | Path: %s | Priority: %s | J: %d\n", programPath, priority, j);
+        buffer[j] = (char*)malloc(strlen(programPath)+1);
+        strcpy(buffer[j], programPath);
+        j++;
+        buffer[j] = (char*)malloc(strlen(priority)+1);
+        strcpy(buffer[j], priority);
         j++;
 
         shouldRewind = 0;
@@ -46,8 +51,8 @@ int main(int argc, char const *argv[])
     }
     if (shouldRewind)
     {
-        j = 1;
         rewind(commandsFile);
+        j = 1; //Reinicia index do buffer
         while (fscanf(commandsFile, "exec %s\n", programPath) == 1) //Round Robin
         {
             printf("Type: 1 | Path: %s | J: %d\n", programPath, j);
@@ -77,10 +82,6 @@ int main(int argc, char const *argv[])
         else if (schedulerPid == 0)
         {
             buffer[0] = "SchedulerRR";
-            for (int i = 0; i < j; i++)
-            {
-                printf("%s\n", buffer[i]);
-            }
             execv("SchedulerRR", buffer);
         }
 
