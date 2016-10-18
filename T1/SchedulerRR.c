@@ -14,7 +14,10 @@
 // To run:
 // ./a.out ./Test1 ./Test2
 
+static Queue* mainQueue;
+static Queue* waitQueue;
 static ProcessRR current;
+
 
 int runningFlag = 1;
 int count = 0;
@@ -27,11 +30,11 @@ void alarmHandler(int sinal)
 {
 	// stop current.
 	kill(current.pid, SIGSTOP);
-	enqueue(current);
+	enqueue(mainQueue, current);
 
 	// Swap current.
-	current = front();
-	dequeue();
+	current = front(mainQueue);
+	dequeue(mainQueue);
 
 	// Resume current.
 	kill(current.pid, SIGCONT);
@@ -50,7 +53,7 @@ void childHandler(int sinal)
 	{
 		count2++;
 		printf("Process %d finished running!\n", pid);
-		current = front(); dequeue();
+		current = front(mainQueue); dequeue(mainQueue);
 		if(current.pid == -1)
 		{
 			runningFlag = 0;
@@ -63,13 +66,40 @@ void childHandler(int sinal)
 	}
 }
 
+void ioStartedHandler(int sinal) 
+{
+	// stop current.
+	kill(current.pid, SIGSTOP);
+	enqueue(waitQueue, current);
+
+	// Swap current.
+	current = front(mainQueue);
+	dequeue(mainQueue);
+
+	// Resume current.
+	kill(current.pid, SIGCONT);
+
+	alarm(timeSlice);
+}
+
+void ioDoneHandler(int sinal) 
+{
+	enqueue(mainQueue, front(waitQueue));
+	dequeue(waitQueue);
+}
 
 int main(int argc, char const *argv[])
 {
 	if (argc < 2) {
 		printf("Faltam parametros para executar!\n");
+		exit(1);
 	}
 
+	Queue q1 = {NULL, NULL};
+	mainQueue = &q1;
+	Queue q2 = {NULL, NULL};
+	waitQueue = &q2;
+	
 	for(int i = 1; i < argc; i++) {
 		printf("%s\n", argv[i]);
 
@@ -82,16 +112,19 @@ int main(int argc, char const *argv[])
 			}
 		}
 		kill(p.pid, SIGSTOP);
-		enqueue(p);
+		enqueue(mainQueue, p);
 	}
 
-	current = front();
-	dequeue();
+	current = front(mainQueue);
+	dequeue(mainQueue);
 
 	kill(current.pid, SIGCONT);
 
 	signal(SIGCHLD, childHandler);
 	signal(SIGALRM, alarmHandler);
+	signal(SIGUSR1, ioStartedHandler);
+	signal(SIGUSR2, ioDoneHandler);
+	
 	alarm(timeSlice);
 
 

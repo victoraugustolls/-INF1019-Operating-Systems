@@ -9,51 +9,49 @@ struct Node {
 	struct Node* next;
 };
 
-// Two glboal variables to store address of front and rear nodes. 
-struct Node* frontNode = NULL;
-struct Node* rearNode = NULL;
+
 
 // To Enqueue an integer
-void enqueue(ProcessRR x) 
+void enqueue(Queue* queue, ProcessRR x) 
 {
 	struct Node* temp = (struct Node*) malloc(sizeof(struct Node));
 	temp->data = x; 
 	temp->next = NULL;
-	if(frontNode == NULL && rearNode == NULL) {
-		frontNode = rearNode = temp;
+	if(queue->frontNode == NULL && queue->rearNode == NULL) {
+		queue->frontNode = queue->rearNode = temp;
 		return;
 	}
-	rearNode->next = temp;
-	rearNode = temp;
+	queue->rearNode->next = temp;
+	queue->rearNode = temp;
 }
 
 // To Dequeue an integer.
-void dequeue() 
+void dequeue(Queue* queue) 
 {
-	struct Node* temp = frontNode;
-	if(frontNode == NULL) {
+	struct Node* temp = queue->frontNode;
+	if(queue->frontNode == NULL) {
 		printf("Queue is Empty\n");
 		return;
 	}
-	if(frontNode == rearNode) {
-		frontNode = rearNode = NULL;
+	if(queue->frontNode == queue->rearNode) {
+		queue->frontNode = queue->rearNode = NULL;
 	}
 	else {
-		frontNode = frontNode->next;
+		queue->frontNode = queue->frontNode->next;
 	}
 	free(temp);
 }
 
-ProcessRR front() {
-	if(frontNode == NULL) {
+ProcessRR front(Queue* queue) {
+	if(queue->frontNode == NULL) {
 		printf("Queue is empty\n");
         return (ProcessRR){-1};
 	}
-	return frontNode->data;
+	return queue->frontNode->data;
 }
 
-void print() {
-	struct Node* temp = frontNode;
+void print(Queue* queue) {
+	struct Node* temp = queue->frontNode;
 	while(temp != NULL) {
 		printf("%d ",temp->data.pid);
 		temp = temp->next;
@@ -61,12 +59,14 @@ void print() {
 	printf("\n");
 }
 
-//int main() {
-//	/* Drive code to test the implementation. */
-//	// Printing elements in Queue after each Enqueue or Dequeue 
-//	enqueue((ProcessRR){2}); print(); 
-//	enqueue((ProcessRR){4}); print();
-//	enqueue((ProcessRR){6}); print();
-//	dequeue();  print();
-//	enqueue((ProcessRR){8}); print();
-//}
+// int main() {
+// 	/* Drive code to test the implementation. */
+// 	// Printing elements in Queue after each Enqueue or Dequeue 
+// 	Queue q = queue_default;
+// 	Queue* queue = &q;
+// 	enqueue(queue, (ProcessRR){2}); print(queue); 
+// 	enqueue(queue, (ProcessRR){4}); print(queue);
+// 	enqueue(queue, (ProcessRR){6}); print(queue);
+// 	dequeue(queue);  print(queue);
+// 	enqueue(queue, (ProcessRR){8}); print(queue);
+// }
