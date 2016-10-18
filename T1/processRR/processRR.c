@@ -1,19 +1,23 @@
 #include <sys/types.h>
 #include <unistd.h>
-#include "process.h"
+#include <stdlib.h>
+#include "processRR.h"
 
-typedef struct processRR {
+typedef struct processRR
+{
 
     pid_t pid;
 
 } tpProcessRR ;
 
-void createProcessRR(tppProcessRR * pProcessRR, pid_t pid) {
+void createProcessRR(tppProcessRR * pProcessRR, pid_t pid)
+{
 
     tppProcessRR newProcess = NULL;
     newProcess = (tpProcessRR *)malloc(sizeof(tpProcessRR));
 
-    if (newProcess == NULL) {
+    if (newProcess == NULL)
+    {
         exit(1);
     }
     newProcess->pid = pid;
@@ -21,6 +25,7 @@ void createProcessRR(tppProcessRR * pProcessRR, pid_t pid) {
     *pProcessRR = newProcess;
 }
 
-pid_t getProcessRRPid(tppProcessRR pProcessRR) {
-    return pProcessRR->pid;
+pid_t getProcessRRPid(tppProcessRR pProcessRR)
+{
+    return *pProcessRR->pid;
 }

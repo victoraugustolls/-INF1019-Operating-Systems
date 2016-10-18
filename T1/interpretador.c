@@ -25,54 +25,14 @@ int main(int argc, char const *argv[])
     FILE *commandsFile;
     char priority[2];
     char programPath[20];
-	// int status;
-    int j = 0;
+    int j = 1;
     int shouldRewind = 1;
     int type = 0;
-	// pid_t schedulerPid;
+	pid_t schedulerPid;
 
-    // Shared memory variables
-    int endSegment, newInfoSegment, pathSegment, prioritySegment, typeSegment;
     char pathBuffer[BUFFER_SIZE][PATH_SIZE];
     char priorityBuffer[BUFFER_SIZE][2];
-	int *end, *priorityValue, *type, *newInfo;
-
-    // Shared memory access
-    newInfoSegment = shmget(INFO_FLAG_KEY, sizeof(int), IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR );
-    if(newInfoSegment < 0)
-    {
-        printf("Error when creating newInfoSegment\n");
-        exit(1);
-    }
-    newInfo = (int *)shmat(newInfoSegment, 0, 0);
-    *newInfo = 0;
-
-    endSegment = shmget(END_KEY, sizeof(int), IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR );
-    if(endSegment < 0)
-    {
-        printf("Error when creating endSegment\n");
-        exit(1);
-    }
-    end = (int *)shmat(endSegment, 0, 0);
-    *end = 0;
-
-    prioritySegment = shmget(PRIORITY_KEY, sizeof(int), IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR );
-    if(prioritySegment < 0)
-    {
-        printf("Error when creating prioritySegment\n");
-        exit(1);
-    }
-    priorityValue = (int *)shmat(prioritySegment, 0, 0);
-    *priorityValue = 0;
-
-    typeSegment = shmget(TYPE_KEY, sizeof(int), IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR );
-    if(typeSegment < 0)
-    {
-        printf("Error when creating typeSegment\n");
-        exit(1);
-    }
-    type = (int *)shmat(typeSegment, 0, 0);
-    *type = 0;
+    char *buffer[BUFFER_SIZE];
 
     //Read file
     commandsFile = fopen(PROGRAM_FILE, "r");
@@ -94,12 +54,13 @@ int main(int argc, char const *argv[])
     }
     if (shouldRewind)
     {
-        j = 0;
+        j = 1;
         rewind(commandsFile);
         while (fscanf(commandsFile, "exec %s\n", programPath) == 1) //Round Robin
         {
             printf("Type: 1 | Path: %s\n", programPath);
-            strcpy(pathBuffer[j], programPath);
+            // strcpy(pathBuffer[j], programPath);
+            buffer[j] = programPath;
             j++;
             type = 1;
         }
@@ -108,8 +69,8 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < j; i++)
     {
-        printf("%s\n", pathBuffer[i]);
-        printf("%s\n", priorityBuffer[i]);
+        printf("%s\n", buffer[i]);
+        // printf("%s\n", priorityBuffer[i]);
     }
 
     if (type)
@@ -123,25 +84,18 @@ int main(int argc, char const *argv[])
         }
         else if (schedulerPid == 0)
         {
-            
+            buffer[0] = "SchedulerRR";
+            for (int i = 0; i < j; i++)
+            {
+                printf("%s\n", buffer[i]);
+                // buffer[i] = pathBuffer[i];
+            }
+            execv("SchedulerRR", buffer);
         }
 
     }
 
-
     fclose(commandsFile);
-
-	// Libera memoria compartilhada do processo
-	shmdt(type);
-	shmdt(priorityValue);
-	shmdt(newInfo);
-	shmdt(end);
-
-	// Libera memoria compartilhada
-	shmctl(typeSegment, IPC_RMID, 0);
-	shmctl(prioritySegment, IPC_RMID, 0);
-	shmctl(newInfoSegment, IPC_RMID, 0);
-	shmctl(endSegment, IPC_RMID, 0);
 
     return 0;
 }
