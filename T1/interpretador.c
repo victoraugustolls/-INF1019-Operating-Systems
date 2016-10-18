@@ -58,9 +58,8 @@ int main(int argc, char const *argv[])
         rewind(commandsFile);
         while (fscanf(commandsFile, "exec %s\n", programPath) == 1) //Round Robin
         {
-            printf("Type: 1 | Path: %s\n", programPath);
-            // strcpy(pathBuffer[j], programPath);
-            buffer[j] = programPath;
+            printf("Type: 1 | Path: %s | J: %d\n", programPath, j);
+            strcpy(buffer[j], programPath);
             j++;
             type = 1;
         }
@@ -94,6 +93,8 @@ int main(int argc, char const *argv[])
         }
 
     }
+
+    waitpid(-1, NULL, 0);
 
     fclose(commandsFile);
 
