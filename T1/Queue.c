@@ -47,8 +47,7 @@ void dequeue()
 ProcessRR front() {
 	if(frontNode == NULL) {
 		printf("Queue is empty\n");
-		ProcessRR p;
-		return p;
+        return (ProcessRR){-1};
 	}
 	return frontNode->data;
 }
@@ -62,12 +61,12 @@ void print() {
 	printf("\n");
 }
 
-int main() {
-	/* Drive code to test the implementation. */
-	// Printing elements in Queue after each Enqueue or Dequeue 
-	enqueue((ProcessRR){2}); print(); 
-	enqueue((ProcessRR){4}); print();
-	enqueue((ProcessRR){6}); print();
-	dequeue();  print();
-	enqueue((ProcessRR){8}); print();
-}
+//int main() {
+//	/* Drive code to test the implementation. */
+//	// Printing elements in Queue after each Enqueue or Dequeue 
+//	enqueue((ProcessRR){2}); print(); 
+//	enqueue((ProcessRR){4}); print();
+//	enqueue((ProcessRR){6}); print();
+//	dequeue();  print();
+//	enqueue((ProcessRR){8}); print();
+//}
