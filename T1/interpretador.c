@@ -13,12 +13,6 @@
 
 #define PROGRAM_FILE "commands.txt"
 
-#define INFO_FLAG_KEY 8672
-#define TYPE_KEY 8673
-#define PRIORITY_KEY 8674
-#define PATH_KEY 8675
-#define END_KEY 8676
-
 int main(int argc, char const *argv[])
 {
 
@@ -33,8 +27,6 @@ int main(int argc, char const *argv[])
 
 	pid_t schedulerPid;
 
-    char pathBuffer[BUFFER_SIZE][PATH_SIZE];
-    char priorityBuffer[BUFFER_SIZE][2];
     char *buffer[BUFFER_SIZE];
 
     //Read file
@@ -47,9 +39,6 @@ int main(int argc, char const *argv[])
     while (fscanf(commandsFile, "exec %s prioridade=%s\n", programPath, priority) == 2) //Priority
     {
         printf("Type: 0 | Path: %s | Priority: %s\n", programPath, priority);
-
-        strcpy(pathBuffer[j], programPath);
-        strcpy(priorityBuffer[j], priority);
         j++;
 
         shouldRewind = 0;
@@ -62,6 +51,7 @@ int main(int argc, char const *argv[])
         while (fscanf(commandsFile, "exec %s\n", programPath) == 1) //Round Robin
         {
             printf("Type: 1 | Path: %s | J: %d\n", programPath, j);
+            buffer[j] = (char*)malloc(strlen(programPath)+1);
             strcpy(buffer[j], programPath);
             j++;
             type = 1;
@@ -72,7 +62,6 @@ int main(int argc, char const *argv[])
     for (int i = 0; i < j; i++)
     {
         printf("%s\n", buffer[i]);
-        // printf("%s\n", priorityBuffer[i]);
     }
     buffer[j] = NULL;
 
