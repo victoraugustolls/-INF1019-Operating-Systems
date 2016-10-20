@@ -14,9 +14,9 @@
 // To run:
 // ./a.out ./Test1 ./Test2
 
-static Queue* mainQueue;
-static Queue* waitQueue;
+static ProcessRR mainList[20];
 static ProcessRR current;
+static int size = 0;
 
 
 int runningFlag = 1;
@@ -24,25 +24,35 @@ int count = 0;
 int count2 = 0;
 int count3 = 0;
 
+int cmpfunc (const void * a, const void * b)
+{
 
+}
+
+void sortList()
+{
+	qsort(mainList, size, sizeof(ProcessRR), cmpfunc);
+}
+
+void printa()
+{
+	for (int i = 0, i < size, i ++)
+	{
+		printf("%d, %d\n", mainList[i].pid, mainList[i].priority);
+	}
+}
 
 void alarmHandler(int sinal) 
 {
-	if (!isQueueEmpty(waitQueue)) 
-	{
-		enqueue(mainQueue, front(waitQueue)); 
-		dequeue(waitQueue);
-	}
-
 	// stop current.
 	if(current.pid != -1) {
 		kill(current.pid, SIGSTOP);
 	}
-	enqueue(mainQueue, current);
+	// enqueue(mainQueue, current);
 
-	// Swap current.
-	current = front(mainQueue);
-	dequeue(mainQueue);
+	// // Swap current.
+	// current = front(mainQueue);
+	// dequeue(mainQueue);
 
 	// Resume current.
 	if(current.pid != -1) {
@@ -55,24 +65,24 @@ void alarmHandler(int sinal)
 
 void childHandler(int sinal) 
 {
-	int status;
-	pid_t pid = waitpid(-1, &status, WUNTRACED | WCONTINUED | WNOHANG);
+	// int status;
+	// pid_t pid = waitpid(-1, &status, WUNTRACED | WCONTINUED | WNOHANG);
 
-	if (WIFEXITED(status) == 1) // exited normally
-	{
-		count2++;
-		printf("Process %d finished running!\n", pid);
-		current = front(mainQueue); dequeue(mainQueue);
-		if(current.pid == -1 && isQueueEmpty(waitQueue))
-		{
-			runningFlag = 0;
-			alarm(0);
-		}
-		else {
-			kill(current.pid, SIGCONT);
-			alarm(timeSlice);
-		}
-	}
+	// if (WIFEXITED(status) == 1) // exited normally
+	// {
+	// 	count2++;
+	// 	printf("Process %d finished running!\n", pid);
+	// 	current = front(mainQueue); dequeue(mainQueue);
+	// 	if(current.pid == -1 && isQueueEmpty(waitQueue))
+	// 	{
+	// 		runningFlag = 0;
+	// 		alarm(0);
+	// 	}
+	// 	else {
+	// 		kill(current.pid, SIGCONT);
+	// 		alarm(timeSlice);
+	// 	}
+	// }
 }
 
 void ioStartedHandler(int sinal) 
@@ -83,11 +93,11 @@ void ioStartedHandler(int sinal)
 	if(current.pid != -1) {
 		kill(current.pid, SIGSTOP);
 	}
-	enqueue(waitQueue, current);
+	// enqueue(waitQueue, current);
 
-	// Swap current.
-	current = front(mainQueue);
-	dequeue(mainQueue);
+	// // Swap current.
+	// current = front(mainQueue);
+	// dequeue(mainQueue);
 
 	// Resume current.
 	if(current.pid != -1) {
@@ -100,8 +110,8 @@ void ioStartedHandler(int sinal)
 void ioDoneHandler(int sinal) 
 {
 	printf("hello2\n");
-	enqueue(mainQueue, front(waitQueue));
-	dequeue(waitQueue);
+	// enqueue(mainQueue, front(waitQueue));
+	// dequeue(waitQueue);
 }
 
 int main(int argc, char const *argv[])
@@ -115,14 +125,11 @@ int main(int argc, char const *argv[])
 	signal(SIGALRM, alarmHandler);
 	signal(SIGUSR1, ioStartedHandler);
 	signal(SIGUSR2, ioDoneHandler);
-
-	mainQueue = newQueue();
-	waitQueue = newQueue();
 	
-	for(int i = 1; i < argc; i++) {
-		printf("%s\n", argv[i]);
+	for(int i = 1; i < argc; i+=2) {
+		printf("%s, %d\n", argv[i], atoi(argv[i+1]));
 
-		ProcessRR p = {fork(), 0};
+		ProcessRR p = {fork(), atoi(argv[i+1])};
 		if(!p.pid) // child process
 	 	{
 			if(execv(argv[i], NULL) < 0) {
@@ -131,11 +138,10 @@ int main(int argc, char const *argv[])
 			}
 		}
 		kill(p.pid, SIGSTOP);
-		enqueue(mainQueue, p);
+		mainList[size] = p; size++;
 	}
 
-	current = front(mainQueue);
-	dequeue(mainQueue);
+	current = mainList[size-1];
 
 	kill(current.pid, SIGCONT);
 	

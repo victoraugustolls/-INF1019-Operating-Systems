@@ -11,6 +11,15 @@ struct Node {
 
 
 
+Queue* newQueue()
+{
+    Queue* q = (Queue*) malloc(sizeof(Queue));
+    q->frontNode = NULL;
+    q->rearNode = NULL;
+    
+    return q;
+}
+
 // To Enqueue an integer
 void enqueue(Queue* queue, ProcessRR x) 
 {
@@ -48,6 +57,11 @@ ProcessRR front(Queue* queue) {
         return (ProcessRR){-1};
 	}
 	return queue->frontNode->data;
+}
+
+int isQueueEmpty(Queue* queue)
+{
+    return queue->frontNode == NULL;
 }
 
 void print(Queue* queue) {

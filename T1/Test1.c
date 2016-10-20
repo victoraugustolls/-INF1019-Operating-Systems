@@ -4,7 +4,7 @@ int main()
 {
     // CPU-BOUND
     long i = 0;
-    while(i < 250000000)
+    while(i < 1000000000)
     {
         i++;
         if ( (i % 50000000 == 0)) {
