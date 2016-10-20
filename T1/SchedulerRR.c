@@ -26,16 +26,19 @@ int count3 = 0;
 
 
 
-void alarmHandler(int sinal) 
+void alarmHandler(int sinal)
 {
-	if (!isQueueEmpty(waitQueue)) 
+	if (!isQueueEmpty(waitQueue))
 	{
-		enqueue(mainQueue, front(waitQueue)); 
+		printf("\nPid do front(waitQueue): %d\n", front(waitQueue).pid);
+		enqueue(mainQueue, front(waitQueue));
 		dequeue(waitQueue);
+		printf("\nWaitQueue esta vazia apos tirar front? %d\n",isQueueEmpty(waitQueue));
 	}
 
 	// stop current.
 	if(current.pid != -1) {
+		printf("*********** Pid do current antes do stop: %d **********\n", current.pid);
 		kill(current.pid, SIGSTOP);
 	}
 	enqueue(mainQueue, current);
@@ -53,7 +56,7 @@ void alarmHandler(int sinal)
 }
 
 
-void childHandler(int sinal) 
+void childHandler(int sinal)
 {
 	int status;
 	pid_t pid = waitpid(-1, &status, WUNTRACED | WCONTINUED | WNOHANG);
@@ -75,12 +78,13 @@ void childHandler(int sinal)
 	}
 }
 
-void ioStartedHandler(int sinal) 
+void ioStartedHandler(int sinal)
 {
-	printf("hello\n");
+	printf("IO Started Handler\n");
 
 	// stop current.
 	if(current.pid != -1) {
+		printf("Dando stop no processo de pid: %d\n", current.pid);
 		kill(current.pid, SIGSTOP);
 	}
 	enqueue(waitQueue, current);
@@ -97,9 +101,10 @@ void ioStartedHandler(int sinal)
 	alarm(timeSlice);
 }
 
-void ioDoneHandler(int sinal) 
+void ioDoneHandler(int sinal)
 {
-	printf("hello2\n");
+	printf("IO Done Handler\n");
+	fflush(stdout);
 	enqueue(mainQueue, front(waitQueue));
 	dequeue(waitQueue);
 }
@@ -118,7 +123,7 @@ int main(int argc, char const *argv[])
 
 	mainQueue = newQueue();
 	waitQueue = newQueue();
-	
+
 	for(int i = 1; i < argc; i++) {
 		printf("%s\n", argv[i]);
 
@@ -134,20 +139,21 @@ int main(int argc, char const *argv[])
 		enqueue(mainQueue, p);
 	}
 
+	printf("Primeiro processo que será executado: %d\n", front(mainQueue).pid);
 	current = front(mainQueue);
 	dequeue(mainQueue);
 
 	kill(current.pid, SIGCONT);
-	
+
 	alarm(timeSlice);
 
 
 	while(runningFlag)
 	{
+		printf("Current pid: %d\n", current.pid);
 		sleep(1);
 		//printf("%d, %d\n", count, count2);
-		printf("Current pid: %d\n", current.pid);
 	}
-	
+
 	printf("Done!\n");
 }
