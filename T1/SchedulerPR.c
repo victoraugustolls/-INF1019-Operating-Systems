@@ -10,9 +10,12 @@
 #include "Queue.h"
 
 #define timeSlice 1
+#define limit 7
 
 // To run:
 // ./a.out ./Test1 ./Test2
+
+static Queue* waitQueue;
 
 static ProcessRR mainList[20];
 static ProcessRR current;
@@ -45,13 +48,17 @@ void printa()
 	}
 }
 
-void alarmHandler(int sinal) 
+void alarmHandler(int sinal)
 {
 	// stop current.
 	if(current.pid != -1) {
 		kill(current.pid, SIGSTOP);
 	}
-	current.priority ++;
+
+	if (current.priority < 7)
+	{
+		current.priority ++;
+	}
 	mainList[size] = current; size++;
 
 	sortList();
@@ -65,10 +72,20 @@ void alarmHandler(int sinal)
 	}
 	count++;
 	alarm(timeSlice);
+
+	if (!isQueueEmpty(waitQueue))
+	{
+		printf("Tirando do wait processo de pid: %d\n", front(waitQueue).pid);
+		mainList[size] = front(waitQueue); size++;
+		sortList();
+		// enqueue(mainQueue, front(waitQueue));
+		dequeue(waitQueue);
+		printf("WaitQueue esta vazia apos tirar front? %d\n",isQueueEmpty(waitQueue));
+	}
 }
 
 
-void childHandler(int sinal) 
+void childHandler(int sinal)
 {
 	int status;
 	pid_t pid = waitpid(-1, &status, WUNTRACED | WCONTINUED | WNOHANG);
@@ -90,14 +107,26 @@ void childHandler(int sinal)
 	}
 }
 
-void ioStartedHandler(int sinal) 
+void ioStartedHandler(int sinal)
 {
+	printf("IO Started Handler\n");
 
-}
+	// stop current.
+	if(current.pid != -1) {
+		printf("Dando stop no processo de pid: %d\n", current.pid);
+		kill(current.pid, SIGSTOP);
+	}
+	enqueue(waitQueue, current);
 
-void ioDoneHandler(int sinal) 
-{
+	// Swap current.
+	current = mainList[size-1]; size--;
 
+	// Resume current.
+	if(current.pid != -1) {
+		kill(current.pid, SIGCONT);
+	}
+
+	alarm(timeSlice);
 }
 
 int main(int argc, char const *argv[])
@@ -110,8 +139,9 @@ int main(int argc, char const *argv[])
 	signal(SIGCHLD, childHandler);
 	signal(SIGALRM, alarmHandler);
 	signal(SIGUSR1, ioStartedHandler);
-	signal(SIGUSR2, ioDoneHandler);
-	
+
+	waitQueue = newQueue();
+
 	for(int i = 1; i < argc; i+=2) {
 		printf("%s, %d\n", argv[i], atoi(argv[i+1]));
 
@@ -131,7 +161,7 @@ int main(int argc, char const *argv[])
 	current = mainList[size-1]; size--;
 
 	kill(current.pid, SIGCONT);
-	
+
 	alarm(timeSlice);
 
 
@@ -139,8 +169,8 @@ int main(int argc, char const *argv[])
 	{
 		sleep(1);
 		//printf("%d, %d\n", count, count2);
-		printf("Current pid: %d\n", current.pid);
+		printf("Current pid: %d / priority: %d\n", current.pid, current.priority);
 	}
-	
+
 	printf("Done!\n");
 }

@@ -1,3 +1,4 @@
-exec Test1
-exec Test2
-exec TestIO1
+exec Test1 prioridade=1
+exec Test2 prioridade=4
+exec Test1 prioridade=1
+exec TestIO1 prioridade=1

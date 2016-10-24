@@ -86,6 +86,20 @@ int main(int argc, char const *argv[])
         }
 
     }
+    else {
+        // Start scheduler
+        schedulerPid = fork();
+        if (schedulerPid < 0)
+        {
+            printf("Error in fork!\n");
+            exit(1);
+        }
+        else if (schedulerPid == 0)
+        {
+            buffer[0] = "SchedulerPR";
+            execv("SchedulerPR", buffer);
+        }
+    }
 
     waitpid(-1, NULL, 0);
 

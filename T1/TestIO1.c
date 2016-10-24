@@ -10,16 +10,12 @@ int main()
     // IO-BOUND
     long i = 0;
     while(i < 500000000) { i++; }
-
+    
     kill(getppid(), SIGUSR1);
+    i = 0;
 
-    while(i < 50000000)
+    while(i < 500000000)
     {
-        printf("NAO DEI STOP MUAHAHA\n");
-        if (i%100000)
-        {
-            printf("NAO DEI STOP MUAHAHA\n");
-        }
         i++;
     }
 
