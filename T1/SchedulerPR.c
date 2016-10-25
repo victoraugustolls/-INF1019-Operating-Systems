@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <string.h>
+
 #include "Queue.h"
 
 #define timeSlice 1
@@ -42,10 +44,18 @@ void sortList()
 
 void printa()
 {
+
+	printf("Lista de prontos:\n");
+	printf("Inicio -> (");
 	for (int i = 0; i < size; i ++)
 	{
-		printf("%d, %d\n", mainList[i].pid, mainList[i].priority);
+		printf("## %s | %d ##", mainList[i].name, mainList[i].priority);
 	}
+	printf(") <- Fim");
+	printf("\n");
+	printf("Lista em espera:\n");
+	print(waitQueue);
+	printf("\n");
 }
 
 void alarmHandler(int sinal)
@@ -69,18 +79,20 @@ void alarmHandler(int sinal)
 	// Resume current.
 	if(current.pid != -1) {
 		kill(current.pid, SIGCONT);
+		printf("Corrente -- Processo: %s | Prioridade: %d\n", current.name, current.priority);
+		printa();
 	}
 	count++;
 	alarm(timeSlice);
 
 	if (!isQueueEmpty(waitQueue))
 	{
-		printf("Tirando do wait processo de pid: %d\n", front(waitQueue).pid);
+		printf("Tirando do wait processo: %s\n", front(waitQueue).name);
 		mainList[size] = front(waitQueue); size++;
 		sortList();
 		// enqueue(mainQueue, front(waitQueue));
 		dequeue(waitQueue);
-		printf("WaitQueue esta vazia apos tirar front? %d\n",isQueueEmpty(waitQueue));
+		//printf("WaitQueue esta vazia apos tirar front? %d\n",isQueueEmpty(waitQueue));
 	}
 }
 
@@ -93,7 +105,7 @@ void childHandler(int sinal)
 	if (WIFEXITED(status) == 1) // exited normally
 	{
 		count2++;
-		printf("Process %d finished running!\n", pid);
+		printf("Processo %s terminou de rodar!\n", current.name);
 		if(size == 0)
 		{
 			runningFlag = 0;
@@ -102,6 +114,8 @@ void childHandler(int sinal)
 		else {
 			current = mainList[size-1]; size--;
 			kill(current.pid, SIGCONT);
+			printf("Corrente -- Processo: %s | Prioridade: %d\n", current.name, current.priority);
+			printa();
 			alarm(timeSlice);
 		}
 	}
@@ -113,7 +127,7 @@ void ioStartedHandler(int sinal)
 
 	// stop current.
 	if(current.pid != -1) {
-		printf("Dando stop no processo de pid: %d\n", current.pid);
+		printf("Dando stop no processo %s\n", current.name);
 		kill(current.pid, SIGSTOP);
 	}
 	enqueue(waitQueue, current);
@@ -124,6 +138,8 @@ void ioStartedHandler(int sinal)
 	// Resume current.
 	if(current.pid != -1) {
 		kill(current.pid, SIGCONT);
+		printf("Corrente -- Processo: %s | Prioridade: %d\n", current.name, current.priority);
+		printa();
 	}
 
 	alarm(timeSlice);
@@ -145,7 +161,11 @@ int main(int argc, char const *argv[])
 	for(int i = 1; i < argc; i+=2) {
 		printf("%s, %d\n", argv[i], atoi(argv[i+1]));
 
-		ProcessRR p = {fork(), atoi(argv[i+1])};
+		// ProcessRR p = {fork(), atoi(argv[i+1]), argv[i]};
+		ProcessRR p;// = {fork(), 0, argv[i]};
+		strcpy(p.name, argv[i]);
+		p.priority = atoi(argv[i+1]);
+		p.pid = fork();
 		if(!p.pid) // child process
 	 	{
 			if(execv(argv[i], NULL) < 0) {
@@ -161,15 +181,16 @@ int main(int argc, char const *argv[])
 	current = mainList[size-1]; size--;
 
 	kill(current.pid, SIGCONT);
-
+	printf("Corrente -- Processo: %s | Prioridade: %d\n", current.name, current.priority);
+	printa();
 	alarm(timeSlice);
 
 
 	while(runningFlag)
 	{
-		sleep(1);
-		//printf("%d, %d\n", count, count2);
-		printf("Current pid: %d / priority: %d\n", current.pid, current.priority);
+		// sleep(1);
+		// printf("%d, %d\n", count, count2);
+		// printf("Current pid: %d / priority: %d\n", current.pid, current.priority);
 	}
 
 	printf("Done!\n");

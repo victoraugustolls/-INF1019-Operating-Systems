@@ -38,7 +38,7 @@ int main(int argc, char const *argv[])
     }
     while (fscanf(commandsFile, "exec %s prioridade=%s\n", programPath, priority) == 2) //Priority
     {
-        printf("Type: 0 | Path: %s | Priority: %s | J: %d\n", programPath, priority, j);
+        // printf("Type: 0 | Path: %s | Priority: %s | J: %d\n", programPath, priority, j);
         buffer[j] = (char*)malloc(strlen(programPath)+1);
         strcpy(buffer[j], programPath);
         j++;
@@ -55,7 +55,7 @@ int main(int argc, char const *argv[])
         j = 1; //Reinicia index do buffer
         while (fscanf(commandsFile, "exec %s\n", programPath) == 1) //Round Robin
         {
-            printf("Type: 1 | Path: %s | J: %d\n", programPath, j);
+            // printf("Type: 1 | Path: %s | J: %d\n", programPath, j);
             buffer[j] = (char*)malloc(strlen(programPath)+1);
             strcpy(buffer[j], programPath);
             j++;
@@ -64,10 +64,10 @@ int main(int argc, char const *argv[])
     }
     //
 
-    for (int i = 0; i < j; i++)
-    {
-        printf("%s\n", buffer[i]);
-    }
+    // for (int i = 0; i < j; i++)
+    // {
+    //     printf("%s\n", buffer[i]);
+    // }
     buffer[j] = NULL;
 
     if (type)
