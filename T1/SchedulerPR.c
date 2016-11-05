@@ -90,7 +90,6 @@ void alarmHandler(int sinal)
 		printf("Tirando do wait processo: %s\n", front(waitQueue).name);
 		mainList[size] = front(waitQueue); size++;
 		sortList();
-		// enqueue(mainQueue, front(waitQueue));
 		dequeue(waitQueue);
 		//printf("WaitQueue esta vazia apos tirar front? %d\n",isQueueEmpty(waitQueue));
 	}
@@ -106,15 +105,17 @@ void childHandler(int sinal)
 	{
 		count2++;
 		printf("Processo %s terminou de rodar!\n", current.name);
-		if(size == 0)
+		if(size == 0 && isQueueEmpty(waitQueue))
 		{
 			runningFlag = 0;
 			alarm(0);
 		}
 		else {
-			current = mainList[size-1]; size--;
-			kill(current.pid, SIGCONT);
-			printf("Corrente -- Processo: %s | Prioridade: %d\n", current.name, current.priority);
+			if (size != 0) {
+				current = mainList[size-1]; size--;
+				kill(current.pid, SIGCONT);
+				printf("Corrente -- Processo: %s | Prioridade: %d\n", current.name, current.priority);
+			}
 			printa();
 			alarm(timeSlice);
 		}
@@ -126,7 +127,7 @@ void ioStartedHandler(int sinal)
 	printf("IO Started Handler\n");
 
 	// stop current.
-	if(current.pid != -1) {
+	if(current.pid != -1) { 
 		printf("Dando stop no processo %s\n", current.name);
 		kill(current.pid, SIGSTOP);
 	}
@@ -188,7 +189,7 @@ int main(int argc, char const *argv[])
 
 	while(runningFlag)
 	{
-		// sleep(1);
+		sleep(1);
 		// printf("%d, %d\n", count, count2);
 		// printf("Current pid: %d / priority: %d\n", current.pid, current.priority);
 	}

@@ -48,8 +48,8 @@ void alarmHandler(int sinal)
 	// stop current.
 	if(current.pid != -1) {
 		kill(current.pid, SIGSTOP);
+		enqueue(mainQueue, current);
 	}
-	enqueue(mainQueue, current);
 
 	// Swap current.
 	current = front(mainQueue);
@@ -71,8 +71,6 @@ void childHandler(int sinal)
 	int status;
 	pid_t pid = waitpid(-1, &status, WUNTRACED | WCONTINUED | WNOHANG);
 
-	if (WIFSTOPPED(status)) {return;}
-
 	if (WIFEXITED(status)) // exited normally
 	{
 		count2++;
@@ -85,8 +83,10 @@ void childHandler(int sinal)
 			alarm(0);
 		}
 		else {
-			kill(current.pid, SIGCONT);
-			printf("Corrente -- Processo: %s\n", current.name);
+			if (current.pid != -1) {
+				kill(current.pid, SIGCONT);
+				printf("Corrente -- Processo: %s\n", current.name);
+			}
 			printa();
 			alarm(timeSlice);
 		}
@@ -101,8 +101,8 @@ void ioStartedHandler(int sinal)
 	if(current.pid != -1) {
 		printf("Dando stop no processo %s\n", current.name);
 		kill(current.pid, SIGSTOP);
+		enqueue(waitQueue, current);
 	}
-	enqueue(waitQueue, current);
 
 	// Swap current.
 	current = front(mainQueue);

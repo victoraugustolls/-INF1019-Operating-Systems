@@ -1,6 +1,7 @@
 /*Queue - Linked List implementation*/
 #include<stdio.h>
 #include<stdlib.h>
+#include <string.h>
 
 #include"Queue.h"
 
@@ -54,7 +55,11 @@ void dequeue(Queue* queue)
 ProcessRR front(Queue* queue) {
 	if(queue->frontNode == NULL) {
 		printf("Queue is empty\n");
-        return (ProcessRR){-1};
+		ProcessRR p;
+		strcpy(p.name, "VAZIO");
+		p.priority = 0;
+		p.pid = -1;
+        return p;
 	}
 	return queue->frontNode->data;
 }

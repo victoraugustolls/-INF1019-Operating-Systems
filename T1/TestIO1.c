@@ -9,7 +9,7 @@ int main()
 {
     // IO-BOUND
     long i = 0;
-    while(i < 500000000) { i++; }
+    while(i < 200000000) { i++; }
     
     kill(getppid(), SIGUSR1);
     i = 0;
