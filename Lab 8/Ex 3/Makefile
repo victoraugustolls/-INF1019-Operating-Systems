@@ -1,2 +1,3 @@
 make:
-	gcc -Wall -o main main.c -lpthread
+	gcc -Wall -o main main.c queue.c -lpthread
+	./main
