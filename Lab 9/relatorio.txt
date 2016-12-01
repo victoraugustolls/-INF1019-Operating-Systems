@@ -1,0 +1,891 @@
+Exercicio 1
+
+Enunciado:
+
+"Execute o programa Corrida de Sapo algumas vezes e analise os 
+resultados sobre a ordem de chegada dos sapos. Obs: compile com a opção –lpthread"
+
+Codigo:
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+
+#define NUM_THREADS 5
+#define PULO_MAXIMO 100
+#define DESCANSO_MAXIMO 1
+#define DISTANCIA_PARA_CORRER 100
+
+static int classificacao = 1;
+static pthread_mutex_t lock;
+static char * resp[200];
+static int cont = 0;
+
+static void* Correr(void* sapo);
+
+int main()
+{
+	classificacao = 1;
+	pthread_t threads[NUM_THREADS];
+	int t;
+
+	printf("Corrida iniciada...\n");
+
+	for(t = 0; t < NUM_THREADS; t++)
+	{
+		pthread_create(&threads[t], NULL, Correr, (void *)t);
+	}
+
+	for(t = 0; t < NUM_THREADS; t++)
+	{
+		pthread_join(threads[t], NULL);
+	}
+
+	printf("\nAcabou!!\n");
+
+	pthread_exit(NULL);
+
+	return 0;
+}
+
+void* Correr(void* sapo)
+{
+	int pulos = 0;
+	int distanciaJaCorrida = 0;
+
+	while(distanciaJaCorrida <= DISTANCIA_PARA_CORRER)
+	{
+		int pulo = rand() % PULO_MAXIMO;
+		distanciaJaCorrida += pulo;
+		pulos++;
+		printf("Sapo %d pulou\n", (int)sapo);
+		int descanso = rand() % DESCANSO_MAXIMO;
+		sleep(descanso);
+	}
+
+	printf("Sapo %d chegou na posicao %d com %d pulos!\n", (int)sapo, classificacao, pulos);
+	cont++;
+	classificacao++;
+
+	pthread_exit(NULL);
+}
+
+Saida:
+
+./main
+Corrida iniciada...
+Sapo 0 pulou
+Sapo 1 pulou
+Sapo 0 pulou
+Sapo 0 pulou
+Sapo 1 pulou
+Sapo 2 pulou
+Sapo 0 pulou
+Sapo 3 pulou
+Sapo 4 pulou
+Sapo 1 chegou na posicao 1 com 2 pulos!
+Sapo 2 pulou
+Sapo 0 chegou na posicao 1 com 4 pulos!
+Sapo 3 pulou
+Sapo 4 pulou
+Sapo 2 pulou
+Sapo 3 chegou na posicao 3 com 2 pulos!
+Sapo 4 pulou
+Sapo 2 pulou
+Sapo 4 chegou na posicao 4 com 3 pulos!
+Sapo 2 pulou
+Sapo 2 chegou na posicao 5 com 5 pulos!
+
+Acabou!!
+
+Conclusao:
+
+Como não existe exclusão mútua na classificação dos sapos, algumas vezes sapos diferentes poderiam ter a 
+mesma posição de chegada. No exemplo de saída acima, os sapos 0 e 1 chegam em instantes diferentes, porém 
+na mesma posição.
+
+
+///////////////////////////////
+
+
+Exercicio 2
+
+Enunciado:
+
+"Usando mutex, modifique o programa Corrida de Sampo para que 
+o problema identificado anteriormente não ocorra."
+
+Codigo:
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+
+#define NUM_THREADS 5
+#define PULO_MAXIMO 100
+#define DESCANSO_MAXIMO 1
+#define DISTANCIA_PARA_CORRER 100
+
+static int classificacao = 1;
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static char * resp[200];
+static int cont = 0;
+
+static void* Correr(void* sapo);
+
+int main()
+{
+	classificacao = 1;
+	pthread_t threads[NUM_THREADS];
+	int t;
+
+	printf("Corrida iniciada... \n");
+
+	for(t = 0; t < NUM_THREADS; t++)
+	{
+		pthread_create(&threads[t], NULL, Correr, (void *)t);
+	}
+
+	for(t = 0; t < NUM_THREADS; t++)
+	{
+		pthread_join(threads[t], NULL);
+	}
+
+	printf("\nAcabou!!\n");
+
+	pthread_exit(NULL);
+
+	return 0;
+}
+
+void* Correr(void* sapo)
+{
+	int pulos = 0;
+	int distanciaJaCorrida = 0;
+
+	while(distanciaJaCorrida <= DISTANCIA_PARA_CORRER)
+	{
+		int pulo = rand() % PULO_MAXIMO;
+		distanciaJaCorrida += pulo;
+		pulos++;
+		printf("Sapo %d pulou\n", (int)sapo);
+		int descanso = rand() % DESCANSO_MAXIMO;
+		sleep(descanso);
+	}
+
+	pthread_mutex_lock(&lock);
+	printf("Sapo %d chegou na posicao %d com %d pulos!\n", (int)sapo, classificacao, pulos);
+	cont++;
+	classificacao++;
+	pthread_mutex_unlock(&lock);
+
+	pthread_exit(NULL);
+}
+
+Saida:
+
+./main
+Corrida iniciada...
+Sapo 0 pulou
+Sapo 1 pulou
+Sapo 2 pulou
+Sapo 0 pulou
+Sapo 1 pulou
+Sapo 3 pulou
+Sapo 4 pulou
+Sapo 2 pulou
+Sapo 0 pulou
+Sapo 1 pulou
+Sapo 3 pulou
+Sapo 4 pulou
+Sapo 2 chegou na posicao 1 com 2 pulos!
+Sapo 4 pulou
+Sapo 0 chegou na posicao 2 com 3 pulos!
+Sapo 1 chegou na posicao 3 com 3 pulos!
+Sapo 3 chegou na posicao 4 com 2 pulos!
+Sapo 4 chegou na posicao 5 com 3 pulos!
+
+Acabou!!
+
+Conclusao:
+
+Ao colocar exclusao mutua na regiao critica (no caso a variavel classificacao), o problema encontrado no item 1 deixa de acontecer.
+
+
+///////////////////////////////
+
+
+Exercicio 3
+
+OBS: Como o exercicio 3 e similar ao do laboratorio anterior, e eu tinha feito com mutex, foi pedido para fazer esse sem mutex.
+
+Enunciado:
+
+"Usando threads, escreva um programa C que implemente o problema do produtor/consumidor. 
+O produtor deve produzir dados (números inteiros pseudo-aleatórios) a cada 1 segundo 
+colocando-os em uma fila (buffer, implementação circular). O consumidor deve retirar 
+dados da fila a cada 2 segundos. O tamanho máximo da fila deve ser de 8 elementos (MAXFILA) e
+tanto o produtor como o consumidor devem produzir/consumir 64 elementos (números inteiros de 1 a 64, por exemplo)
+evitando condições de corrida. Variáveis compartilhadas entre threads são simplesmente variáveis globais."
+
+
+Codigo:
+
+- Queue.h
+
+#ifndef QUEUE_H
+#define QUEUE_H
+
+struct queue {
+	int limit;
+    struct Node* frontNode;
+    struct Node* rearNode;
+};
+typedef struct queue Queue;
+
+Queue* newQueue();
+void enqueue(Queue* queue, int x);
+int dequeue(Queue* queue);
+int queueNotFull(Queue* queue);
+int queueNotEmpty(Queue* queue);
+
+#endif /* QUEUE_H */
+
+- Queue.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "Queue.h"
+
+struct Node {
+	int data;
+	struct Node* next;
+};
+
+Queue* newQueue()
+{
+    Queue* q = (Queue*)malloc(sizeof(Queue));
+    q->limit = 0;
+    q->frontNode = NULL;
+    q->rearNode = NULL;
+
+    return q;
+}
+
+// To Enqueue an integer
+void enqueue(Queue* queue, int x)
+{
+	struct Node* temp = (struct Node*) malloc(sizeof(struct Node));
+	temp->data = x;
+	temp->next = NULL;
+	if(queue->frontNode == NULL && queue->rearNode == NULL) {
+		queue->frontNode = queue->rearNode = temp;
+		queue->limit ++;
+		return;
+	}
+	if(queue->limit < 8) {
+		queue->limit++;
+		queue->rearNode->next = temp;
+		queue->rearNode = temp;
+	}
+}
+
+// To Dequeue an integer.
+int dequeue(Queue* queue)
+{
+	struct Node* temp = queue->frontNode;
+	if(queue->frontNode == NULL) {
+		printf("Queue is Empty\n");
+		return 0;
+	}
+	if(queue->frontNode == queue->rearNode) {
+		queue->frontNode = queue->rearNode = NULL;
+	}
+	else {
+		queue->frontNode = queue->frontNode->next;
+	}
+	queue->limit--;
+	return temp->data;
+}
+
+int queueNotFull(Queue* queue) {
+	if(queue->limit >= 8) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
+int queueNotEmpty(Queue* queue) {
+	if(queue->limit <= 0) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
+- main.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+#include "Queue.h"
+
+#define NUMTHREADS 2
+#define LIMIT 64
+
+Queue* q;
+int notBusy = 1;
+
+void *produtor(void *threadid) {
+	for (int i = 0; i < LIMIT;)
+	{
+		sleep(1);
+		if(queueNotFull(q) && notBusy) {
+			notBusy = 0;
+			int r = rand()%40;
+			enqueue(q, r);
+			printf("Produtor adicionou: %d\n", r);
+			notBusy = 1;
+			i++;
+		}
+		else {
+			printf("Fila cheia / ocupada!\n");
+		}
+	}
+	pthread_exit(NULL);
+}
+
+void *consumidor(void *threadid) {
+	for (int i = 0; i < LIMIT;)
+	{
+		sleep(2);
+		if(queueNotEmpty(q) && notBusy) {
+			notBusy = 0;
+			int r = dequeue(q);
+			printf("Consumidor consumiu: %d\n", r);
+			notBusy = 1;
+			i++;
+		}
+		else {
+			printf("Fila vazia / ocupada!\n");
+		}
+	}
+	pthread_exit(NULL);
+}
+
+int main(int argc, char const *argv[])
+{
+	q = newQueue();
+
+	pthread_t threads[NUMTHREADS];
+
+	pthread_create(&threads[0], NULL, produtor, (void *)0);
+	pthread_create(&threads[1], NULL, consumidor, (void *)1);
+
+	for (int i = 0; i < 2; i++)
+	{
+		pthread_join(threads[i], NULL);
+	}
+	
+	return 0;
+}
+
+Saida:
+
+./main
+Produtor adicionou: 7
+Consumidor consumiu: 7
+Produtor adicionou: 9
+Produtor adicionou: 33
+Consumidor consumiu: 9
+Produtor adicionou: 18
+Produtor adicionou: 10
+Consumidor consumiu: 33
+Produtor adicionou: 32
+Produtor adicionou: 24
+Consumidor consumiu: 18
+Produtor adicionou: 38
+Produtor adicionou: 3
+Consumidor consumiu: 10
+Produtor adicionou: 29
+Produtor adicionou: 0
+Consumidor consumiu: 32
+Produtor adicionou: 5
+Produtor adicionou: 12
+Consumidor consumiu: 24
+Produtor adicionou: 2
+Produtor adicionou: 27
+Consumidor consumiu: 38
+Produtor adicionou: 23
+Fila cheia / ocupada!
+Consumidor consumiu: 3
+Produtor adicionou: 7
+Fila cheia / ocupada!
+Consumidor consumiu: 29
+Produtor adicionou: 9
+Fila cheia / ocupada!
+Consumidor consumiu: 0
+Produtor adicionou: 0
+Fila cheia / ocupada!
+Consumidor consumiu: 5
+Produtor adicionou: 12
+Fila cheia / ocupada!
+Consumidor consumiu: 12
+Produtor adicionou: 23
+Fila cheia / ocupada!
+Consumidor consumiu: 2
+Produtor adicionou: 9
+Fila cheia / ocupada!
+Consumidor consumiu: 27
+Produtor adicionou: 29
+Fila cheia / ocupada!
+Consumidor consumiu: 23
+Produtor adicionou: 37
+Fila cheia / ocupada!
+Consumidor consumiu: 7
+Produtor adicionou: 0
+Fila cheia / ocupada!
+Consumidor consumiu: 9
+Produtor adicionou: 13
+Fila cheia / ocupada!
+Consumidor consumiu: 0
+Produtor adicionou: 19
+Fila cheia / ocupada!
+Consumidor consumiu: 12
+Produtor adicionou: 38
+Fila cheia / ocupada!
+Consumidor consumiu: 23
+Produtor adicionou: 16
+Fila cheia / ocupada!
+Consumidor consumiu: 9
+Produtor adicionou: 15
+Fila cheia / ocupada!
+Consumidor consumiu: 29
+Produtor adicionou: 17
+Fila cheia / ocupada!
+Consumidor consumiu: 37
+Produtor adicionou: 26
+Fila cheia / ocupada!
+Consumidor consumiu: 0
+Produtor adicionou: 32
+Fila cheia / ocupada!
+Consumidor consumiu: 13
+Produtor adicionou: 27
+Fila cheia / ocupada!
+Consumidor consumiu: 19
+Produtor adicionou: 10
+Fila cheia / ocupada!
+Consumidor consumiu: 38
+Produtor adicionou: 33
+Fila cheia / ocupada!
+Consumidor consumiu: 16
+Produtor adicionou: 19
+Fila cheia / ocupada!
+Consumidor consumiu: 15
+Produtor adicionou: 29
+Fila cheia / ocupada!
+Consumidor consumiu: 17
+Produtor adicionou: 19
+Fila cheia / ocupada!
+Consumidor consumiu: 26
+Produtor adicionou: 21
+Fila cheia / ocupada!
+Consumidor consumiu: 32
+Produtor adicionou: 7
+Fila cheia / ocupada!
+Consumidor consumiu: 27
+Produtor adicionou: 32
+Fila cheia / ocupada!
+Consumidor consumiu: 10
+Produtor adicionou: 33
+Fila cheia / ocupada!
+Consumidor consumiu: 33
+Produtor adicionou: 16
+Fila cheia / ocupada!
+Consumidor consumiu: 19
+Produtor adicionou: 5
+Fila cheia / ocupada!
+Consumidor consumiu: 29
+Produtor adicionou: 25
+Fila cheia / ocupada!
+Consumidor consumiu: 19
+Produtor adicionou: 28
+Fila cheia / ocupada!
+Consumidor consumiu: 21
+Produtor adicionou: 11
+Fila cheia / ocupada!
+Consumidor consumiu: 7
+Produtor adicionou: 34
+Fila cheia / ocupada!
+Consumidor consumiu: 32
+Produtor adicionou: 37
+Fila cheia / ocupada!
+Consumidor consumiu: 33
+Produtor adicionou: 1
+Fila cheia / ocupada!
+Consumidor consumiu: 16
+Produtor adicionou: 33
+Fila cheia / ocupada!
+Consumidor consumiu: 5
+Produtor adicionou: 28
+Fila cheia / ocupada!
+Consumidor consumiu: 25
+Produtor adicionou: 24
+Fila cheia / ocupada!
+Consumidor consumiu: 28
+Produtor adicionou: 28
+Fila cheia / ocupada!
+Consumidor consumiu: 11
+Produtor adicionou: 10
+Fila cheia / ocupada!
+Consumidor consumiu: 34
+Produtor adicionou: 4
+Fila cheia / ocupada!
+Consumidor consumiu: 37
+Produtor adicionou: 36
+Fila cheia / ocupada!
+Consumidor consumiu: 1
+Produtor adicionou: 10
+Fila cheia / ocupada!
+Consumidor consumiu: 33
+Produtor adicionou: 23
+Fila cheia / ocupada!
+Consumidor consumiu: 28
+Produtor adicionou: 2
+Fila cheia / ocupada!
+Consumidor consumiu: 24
+Produtor adicionou: 26
+Fila cheia / ocupada!
+Consumidor consumiu: 28
+Produtor adicionou: 29
+Fila cheia / ocupada!
+Consumidor consumiu: 10
+Produtor adicionou: 24
+Consumidor consumiu: 4
+Consumidor consumiu: 36
+Consumidor consumiu: 10
+Consumidor consumiu: 23
+Consumidor consumiu: 2
+Consumidor consumiu: 26
+Consumidor consumiu: 29
+Consumidor consumiu: 24
+
+Conclusao:
+
+Apesar de nao ser a solucao ideal, a qual seria mutex, para um caso simples como esse a solucao apresentada funciona. Caso seja necessaria aumentar a complexidade do sistema, o ideal seria implementar com mutex para ter a garantia de que a area critica nao seria acessada pelas duas threads simultaneamente.
+
+
+///////////////////////////////
+
+
+Exercicio 4
+
+Enunciado:
+
+Modifique o programa anterior, para que haja 2 (ou mais) threads 
+consumidor e 2 (ou mais) threads produtor. O que muda em relação 
+ao uso do mutex e da variável de condição?
+
+Codigo:
+
+- Queue.h
+
+#ifndef QUEUE_H
+#define QUEUE_H
+
+struct queue {
+	int limit;
+    struct Node* frontNode;
+    struct Node* rearNode;
+};
+typedef struct queue Queue;
+
+Queue* newQueue();
+void enqueue(Queue* queue, int x);
+int dequeue(Queue* queue);
+int queueNotFull(Queue* queue);
+int queueNotEmpty(Queue* queue);
+
+#endif /* QUEUE_H */
+
+- Queue.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "Queue.h"
+
+struct Node {
+	int data;
+	struct Node* next;
+};
+
+Queue* newQueue()
+{
+    Queue* q = (Queue*)malloc(sizeof(Queue));
+    q->limit = 0;
+    q->frontNode = NULL;
+    q->rearNode = NULL;
+
+    return q;
+}
+
+// To Enqueue an integer
+void enqueue(Queue* queue, int x)
+{
+	struct Node* temp = (struct Node*) malloc(sizeof(struct Node));
+	temp->data = x;
+	temp->next = NULL;
+	if(queue->frontNode == NULL && queue->rearNode == NULL) {
+		queue->frontNode = queue->rearNode = temp;
+		queue->limit ++;
+		return;
+	}
+	if(queue->limit < 8) {
+		queue->limit++;
+		queue->rearNode->next = temp;
+		queue->rearNode = temp;
+	}
+}
+
+// To Dequeue an integer.
+int dequeue(Queue* queue)
+{
+	struct Node* temp = queue->frontNode;
+	if(queue->frontNode == NULL) {
+		printf("Queue is Empty\n");
+		return 0;
+	}
+	if(queue->frontNode == queue->rearNode) {
+		queue->frontNode = queue->rearNode = NULL;
+	}
+	else {
+		queue->frontNode = queue->frontNode->next;
+	}
+	queue->limit--;
+	return temp->data;
+}
+
+int queueNotFull(Queue* queue) {
+	if(queue->limit >= 8) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
+int queueNotEmpty(Queue* queue) {
+	if(queue->limit <= 0) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
+- main.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+#include "Queue.h"
+
+#define NUMTHREADS 4
+#define LIMIT 20
+
+Queue* q;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t production_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t consume_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t product = PTHREAD_COND_INITIALIZER;
+pthread_cond_t consume = PTHREAD_COND_INITIALIZER;
+
+void* produtor(void* threadid) {
+	for (int i = 0; i < LIMIT;)
+	{
+		sleep(1);
+		if(queueNotFull(q)) {
+			pthread_mutex_lock(&mutex);
+			int r = rand()%40;
+			enqueue(q, r);
+			printf("Produtor adicionou: %d, thread: %d\n", r, threadid);
+			pthread_mutex_unlock(&mutex);
+			pthread_cond_signal(&consume);
+			i++;
+		}
+		else {
+			printf("Fila cheia, trava thread: %d!\n", threadid);
+			pthread_mutex_lock(&production_mutex);
+			pthread_cond_wait(&product, &production_mutex);
+			pthread_mutex_unlock(&production_mutex);
+			printf("Desbloqueado produtor de thread: %d\n", threadid);
+		}
+	}
+	pthread_exit(NULL);
+}
+
+void* consumidor(void* threadid) {
+	for (int i = 0; i < LIMIT;)
+	{
+		sleep(2);
+		if(queueNotEmpty(q)) {
+			pthread_mutex_lock(&mutex);
+			int r = dequeue(q);
+			printf("Consumidor consumiu: %d, thread: %d\n", r, threadid);
+			pthread_mutex_unlock(&mutex);
+			pthread_cond_signal(&product);
+			i++;
+		}
+		else {
+			printf("Fila vazia, trava thread: %d!\n", threadid);
+			pthread_mutex_lock(&consume_mutex);
+			pthread_cond_wait(&consume, &consume_mutex);
+			pthread_mutex_unlock(&consume_mutex);
+			printf("Desbloqueado consumidor de thread: %d\n", threadid);
+		}
+	}
+	pthread_exit(NULL);
+}
+
+int main(int argc, char const *argv[])
+{
+	q = newQueue();
+
+	pthread_t threads[NUMTHREADS];
+
+	pthread_create(&threads[0], NULL, produtor, (void *)0);
+	pthread_create(&threads[1], NULL, produtor, (void *)1);
+	pthread_create(&threads[2], NULL, consumidor, (void *)2);
+	pthread_create(&threads[3], NULL, consumidor, (void *)3);
+
+	for (int i = 0; i < NUMTHREADS; i++)
+	{
+		pthread_join(threads[i], NULL);
+	}
+	
+	return 0;
+}
+
+Saida:
+
+./main
+Produtor adicionou: 7, thread: 0
+Produtor adicionou: 9, thread: 1
+Consumidor consumiu: 7, thread: 2
+Consumidor consumiu: 9, thread: 3
+Produtor adicionou: 33, thread: 1
+Produtor adicionou: 18, thread: 0
+Produtor adicionou: 10, thread: 0
+Produtor adicionou: 32, thread: 1
+Consumidor consumiu: 33, thread: 3
+Consumidor consumiu: 18, thread: 2
+Produtor adicionou: 24, thread: 1
+Produtor adicionou: 38, thread: 0
+Produtor adicionou: 3, thread: 1
+Produtor adicionou: 29, thread: 0
+Consumidor consumiu: 10, thread: 2
+Consumidor consumiu: 32, thread: 3
+Produtor adicionou: 0, thread: 1
+Produtor adicionou: 5, thread: 0
+Produtor adicionou: 12, thread: 1
+Produtor adicionou: 2, thread: 0
+Consumidor consumiu: 24, thread: 2
+Consumidor consumiu: 38, thread: 3
+Produtor adicionou: 27, thread: 0
+Produtor adicionou: 23, thread: 1
+Fila cheia, trava thread: 0!
+Fila cheia, trava thread: 1!
+Consumidor consumiu: 3, thread: 2
+Consumidor consumiu: 29, thread: 3
+Desbloqueado produtor de thread: 0
+Desbloqueado produtor de thread: 1
+Produtor adicionou: 7, thread: 1
+Produtor adicionou: 9, thread: 0
+Consumidor consumiu: 0, thread: 2
+Consumidor consumiu: 5, thread: 3
+Produtor adicionou: 0, thread: 1
+Produtor adicionou: 12, thread: 0
+Fila cheia, trava thread: 1!
+Fila cheia, trava thread: 0!
+Consumidor consumiu: 12, thread: 2
+Consumidor consumiu: 2, thread: 3
+Desbloqueado produtor de thread: 1
+Desbloqueado produtor de thread: 0
+Produtor adicionou: 23, thread: 0
+Produtor adicionou: 9, thread: 1
+Consumidor consumiu: 27, thread: 2
+Consumidor consumiu: 23, thread: 3
+Produtor adicionou: 29, thread: 0
+Produtor adicionou: 37, thread: 1
+Fila cheia, trava thread: 0!
+Fila cheia, trava thread: 1!
+Consumidor consumiu: 7, thread: 3
+Consumidor consumiu: 9, thread: 2
+Desbloqueado produtor de thread: 0
+Desbloqueado produtor de thread: 1
+Produtor adicionou: 0, thread: 0
+Produtor adicionou: 13, thread: 1
+Consumidor consumiu: 0, thread: 2
+Consumidor consumiu: 12, thread: 3
+Produtor adicionou: 19, thread: 0
+Produtor adicionou: 38, thread: 1
+Fila cheia, trava thread: 0!
+Fila cheia, trava thread: 1!
+Consumidor consumiu: 23, thread: 2
+Consumidor consumiu: 9, thread: 3
+Desbloqueado produtor de thread: 0
+Desbloqueado produtor de thread: 1
+Produtor adicionou: 16, thread: 1
+Produtor adicionou: 15, thread: 0
+Consumidor consumiu: 29, thread: 2
+Consumidor consumiu: 37, thread: 3
+Produtor adicionou: 17, thread: 0
+Produtor adicionou: 26, thread: 1
+Fila cheia, trava thread: 0!
+Fila cheia, trava thread: 1!
+Consumidor consumiu: 0, thread: 2
+Consumidor consumiu: 13, thread: 3
+Desbloqueado produtor de thread: 0
+Desbloqueado produtor de thread: 1
+Produtor adicionou: 32, thread: 0
+Produtor adicionou: 27, thread: 1
+Consumidor consumiu: 19, thread: 3
+Consumidor consumiu: 38, thread: 2
+Produtor adicionou: 10, thread: 0
+Produtor adicionou: 33, thread: 1
+Fila cheia, trava thread: 0!
+Fila cheia, trava thread: 1!
+Consumidor consumiu: 16, thread: 3
+Consumidor consumiu: 15, thread: 2
+Desbloqueado produtor de thread: 0
+Desbloqueado produtor de thread: 1
+Produtor adicionou: 19, thread: 0
+Produtor adicionou: 29, thread: 1
+Consumidor consumiu: 17, thread: 3
+Consumidor consumiu: 26, thread: 2
+Produtor adicionou: 19, thread: 0
+Produtor adicionou: 21, thread: 1
+Consumidor consumiu: 32, thread: 2
+Consumidor consumiu: 27, thread: 3
+Consumidor consumiu: 10, thread: 3
+Consumidor consumiu: 33, thread: 2
+Consumidor consumiu: 19, thread: 2
+Consumidor consumiu: 29, thread: 3
+Consumidor consumiu: 19, thread: 2
+Consumidor consumiu: 21, thread: 3
+
+Conclusao:
+
+Para poder adequar o problema para 2 consumidores e 2 produtores, foram necessários utilizar variáveis de controle. Ao longo da implementação das mesmas me deparei com o problema de apenas um dos produtores acordarem, mesmo usando pthread_cond_broadcast no lugar de pthread_cond_signal. Depois de ler o man do pthread_cond_signal, encontrei o erro que era quando se usa pthread_cond_signal, ele da unlock no mutex que foi passado como parametro no pthread_cond_wait e se o mesmo mutex não estiver locked antes de se dar wait, o resultado e inesperado. Então quando o segundo produtor, por exemplo, chega para dar wait e o mutex se encontra unlocked, nao era possivel saber o que ia acontecer. Para resolver isso foi necessário dar lock no mutex logo antes do wait, levando o programa a começar a funcionar.
+
