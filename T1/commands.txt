@@ -1,2 +1,2 @@
-exec Test1 prioridade=1
-exec Test2 prioridade=2
+exec Test1
+exec Test2

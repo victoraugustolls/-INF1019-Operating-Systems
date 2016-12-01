@@ -4,6 +4,7 @@
 struct processRR {
     pid_t pid;
     int priority;
+    char name[20];
 };
 typedef struct processRR ProcessRR;
 
