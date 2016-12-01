@@ -30,6 +30,7 @@ char* runCommand(char* command)
         
         fileRead(path, nrbytes, offset);
 
+        // path(string), strlen(int), payload (string), nrbytes lidos(int), offset igual ao do R-REQ(int)
         return NULL;
     }
     
@@ -43,6 +44,7 @@ char* runCommand(char* command)
         
         fileWrite(path, payload, nrbytes, offset);
         
+        // path (string), strlen(int), payload(string vazio), nrbytes escritos (int), offset igual ao do W-REQ(int)
         return NULL;
     }
     
@@ -52,6 +54,7 @@ char* runCommand(char* command)
 
         fileInfo(path);
         
+        // path (string), strlen(int), owner(int), permissions (2char), filelength (int)
         return NULL;
     }
     
@@ -62,6 +65,7 @@ char* runCommand(char* command)
         
         dirCreate(path, name);
         
+        // path(string), strlen(int)
         return NULL;
     }
 
@@ -72,6 +76,7 @@ char* runCommand(char* command)
 
         dirRemove(path, name);
         
+        // path(string), strlen(int)
         return NULL;
     }
 
@@ -81,6 +86,7 @@ char* runCommand(char* command)
         
         dirList(path);
         
+        // allfilenames (string), fstlstpositions (array[40] of struct {int, int}), nrnames (int)
         return NULL;
     }
     
