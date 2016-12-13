@@ -127,6 +127,7 @@ char* runCommand(char* command)
 	{
 		char* path = params[1];
 		char* name = params[3];
+
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char* answer;
 		char  len[20];
@@ -275,12 +276,12 @@ static void runServer(int port)
         if (hostaddrp == NULL)
             error("ERROR on inet_ntoa\n");
     
-        printf("server received datagram from %s (%s)\n",  hostp->h_name, hostaddrp);
-        printf("server received %lu/%d bytes: %s\n", strlen(buf), n, buf);
+        printf("Server received datagram from %s (%s)\n",  hostp->h_name, hostaddrp);
+        printf("Server received %lu/%d bytes: %s\n", strlen(buf), n, buf);
 
         char* reply;
         if( !(reply = runCommand(buf)) ) {
-            reply = strdup("Error:could not understand command!");
+            reply = strdup("Error: could not understand command!");
         }
         
         /* 
@@ -423,11 +424,11 @@ static char* dirCreate(char* path, char* name)
 	char* fullpath = (char*)malloc((strlen(path) + strlen(name)) * sizeof(char));
 	mode_t permissao = S_IRWXU | S_IROTH | S_IWOTH | S_IXOTH;
 
+	printf("dirCreate -- path: %s, name: %s, fullpath: %s\n", path, name, fullpath);
+
 	strcpy(fullpath, path);
 	strcat(fullpath, "/");
 	strcat(fullpath, name);
-
-	printf("dirCreate -- path: %s, name: %s, fullpath: %s\n", path, name, fullpath);
 
 	if (stat(fullpath, &st) == -1) {
 		if (mkdir(fullpath, permissao) != 0)
