@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/param.h>
+#include <sys/dir.h>
+#include <stddef.h>
+#include <fcntl.h>
 
 #define BUFFER 100
 
