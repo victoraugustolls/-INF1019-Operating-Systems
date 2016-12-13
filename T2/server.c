@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #define BUFFER 100
 
@@ -62,11 +63,27 @@ char* runCommand(char* command)
     {
         char* path = params[1];
         char* name = params[3];
+        char* fullpath = (char*)malloc(BUFFER * sizeof(char));
+        char* answer;
+        char  len[20];
+
+        fullpath[0] = '\0';
         
-        dirCreate(path, name);
+        answer = dirCreate(path, name);
+        if(answer == NULL) {
+            printf("Error creating directory\n");
+            return NULL;
+        }
+
+        snprintf(len, 20, "%lu", strlen(answer));
+
+        strcpy(fullpath, "DC-REP ");
+        strcat(fullpath, answer);
+        strcat(fullpath, " ");
+        strcat(fullpath, len);
         
         // path(string), strlen(int)
-        return NULL;
+        return fullpath;
     }
 
     if(!strcmp(params[0], "DR-REQ"))
@@ -117,7 +134,7 @@ int main (void)
 
     
     // path(string), strlen(int), dirname(string), strlen(int)
-    command = strdup("DC-REQ path/to/file 5 newDir 5");
+    command = strdup("DC-REQ . 5 newDir 5");
     runCommand(command);
     free(command);
 
@@ -161,9 +178,27 @@ static void fileInfo(char* path)
 
 static char* dirCreate(char* path, char* name)
 {
-    printf("dirCreate -- path: %s, name: %s\n", path, name);
+    struct stat st = {0};
+    char* fullpath = (char*)malloc((strlen(path) + strlen(name)) * sizeof(char));
+    strcpy(fullpath, path);
+    strcat(fullpath, "/");
+    strcat(fullpath, name);
 
-    return NULL;
+    printf("dirCreate -- path: %s, name: %s, fullpath: %s\n", path, name, fullpath);
+
+    if (stat(fullpath, &st) == -1) {
+        if (mkdir(fullpath, 0700) != 0)
+        {
+            printf("Error in mkdir\n");
+            return NULL;
+        }
+    }
+    else {
+        printf("Stat error\n");
+        return NULL;
+    }
+
+    return fullpath;
 }
 
 static char* dirRemove(char* path, char* name)
