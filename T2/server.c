@@ -249,7 +249,7 @@ static void runServer(int port)
 
         char* reply;
         if( !(reply = runCommand(buf)) ) {
-            reply = strdup("Error: could not understand command!");
+            reply = strdup("Error:could not understand command!");
         }
         
         /* 
@@ -265,7 +265,7 @@ static void runServer(int port)
 int main(int argc, char **argv)
 {
 	char* command;
-	
+	/*
 	// path(string), strlen(int), payload (string vazio), nrbytes(int), offset(int)
 	command = strdup("RD-REQ path/to/file 5 5 0");
 	runCommand(command);
@@ -299,6 +299,8 @@ int main(int argc, char **argv)
 	command = strdup("DL-REQ path/to/file 5");
 	runCommand(command);
 	free(command);
+
+    */
 
 
     /* 
