@@ -122,7 +122,7 @@ char* runCommand(char* command)
 		return NULL;
 	}
 	
-	if(!strcmp(params[0], "DC-REQ"))
+	if(!strcmp(params[0], "DC-REQ")) // OK!
 	{
 		char* path = params[1];
 		char* name = params[3];
@@ -151,7 +151,7 @@ char* runCommand(char* command)
 		return fullpath;
 	}
 
-	if(!strcmp(params[0], "DR-REQ"))
+	if(!strcmp(params[0], "DR-REQ")) // OK!
 	{
 		char* path = params[1];
 		char* name = params[3];
@@ -249,7 +249,6 @@ static void runServer(int port)
     clientlen = sizeof(clientaddr);
     while (1) 
     {
-
         /*
          * recvfrom: receive a UDP datagram from a client
          */
