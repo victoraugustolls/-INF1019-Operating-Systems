@@ -14,10 +14,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define BUFFER 100
+#define BUFFER  100
+#define BUFSIZE 1024
 
 
-static char* fileRead(char* path, int nrbytes, int offset);
+static char* fileRead(char* path, int *nrbytes, int offset);
 static int fileWrite(char* path, char* payload, int nrbytes, int offset);
 static void fileInfo(char* path); // TODO: return type
 
@@ -26,7 +27,7 @@ static char* dirRemove(char* path, char* name);
 static void dirList(char* path); // TODO: return type
 
 static char* getDirectory();
-static int files(const struct dirent* nameList);
+static int filesFilter(const struct dirent* nameList);
 static int parse (char *buff, int *cmd, char *name);
 static void error(char *msg);
 
@@ -40,10 +41,12 @@ char* runCommand(char* command)
 	{
 		char* path = params[1];
 		int len = atoi(params[2]);
-		char payload[BUFFER];
+		char* payload;
 		int nrbytes = atoi(params[3]);
 		int offset = atoi(params[4]);
-		char len[20];
+
+		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
+		char len2[20];
 		char bt[20];
 		
 		payload = fileRead(path, &nrbytes, offset);
@@ -54,11 +57,11 @@ char* runCommand(char* command)
 			return NULL;
 		}
 
-		snprintf(len, 20, "%lu", strlen(payload));
-		snprintf(bt, 20, "%lu", nrbytes);
+		snprintf(len2, 20, "%lu", strlen(payload));
+		snprintf(bt, 20, "%d", nrbytes);
 
 		strcpy(fullpath, "RD-REP ");
-		strcat(fullpath, len);
+		strcat(fullpath, len2);
 		strcat(fullpath, " ");
 		strcat(fullpath, payload);
 		strcat(fullpath, " ");
@@ -285,20 +288,19 @@ int main (void)
 
 static char* fileRead(char* path, int* nrbytes, int offset)
 {
-	int descriptor = open(fullPath, O_RDONLY);
 	char *fullPath = getDirectory();
 	char *payload;
+	int descriptor = open(fullPath, O_RDONLY);
 
 	printf("fileRead -- path: %s, nrbytes: %d, offset: %d\n", path, *nrbytes, offset);
 
-	fullPath = get_current_directory();
 	strcat(fullPath, path);
 
-	*nrbytes = pread(descriptor, payload, numBytes, offset);
+	*nrbytes = pread(descriptor, payload, *nrbytes, offset);
 
-	if (nrbytes == -1)
+	if (*nrbytes == -1)
 	{
-		printf("Error reading file: %s\n", fullpath);
+		return NULL;
 	}
 	
 	return payload;
@@ -306,14 +308,14 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 
 static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 {
-	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d,  offset: %d\n", path, payload, nrbytes, offset);
+	char* fullpath = getDirectory();
+	int descriptor = open(fullpath, O_WRONLY);
 
-	int descriptor = open(fullPath, O_WRONLY);
-	char* fullpath = getDirectory()
+	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d,  offset: %d\n", path, payload, nrbytes, offset);
 
 	strcpy(fullpath, path);
 
-	pwrite(descriptor, payload, numBytes, offset);
+	pwrite(descriptor, payload, nrbytes, offset);
 	
 	return 0;
 }
@@ -389,7 +391,7 @@ static void dirList(char* path)
 
 	strcat(fullpath, path);
 
-	count = scandir(fullpath, nameList, filesFilter, alphasort);
+	count = scandir(fullpath, &nameList, filesFilter, alphasort);
 	//quantidade de arquivos no diretorio
 
 }
@@ -409,7 +411,7 @@ static char* getDirectory()
 
 static int filesFilter(const struct dirent* nameList)
 {
-	if ((entry->d_type == DT_DIR) || (strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0) )  
+	if ((nameList->d_type == DT_DIR) || (strcmp(nameList->d_name, ".") == 0) || (strcmp(nameList->d_name, "..") == 0) )  
 		return 0; 
 	else
 		return 1;
