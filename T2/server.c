@@ -48,6 +48,8 @@ char* runCommand(char* command)
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char len2[20];
 		char bt[20];
+
+		fullpath[0] = '\0';
 		
 		payload = fileRead(path, &nrbytes, offset);
 
@@ -84,6 +86,8 @@ char* runCommand(char* command)
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char len2[20];
 		char bt[20];
+
+		fullpath[0] = '\0';
 		
 		nrbytes = fileWrite(path, payload, nrbytes, offset);
 
@@ -128,6 +132,7 @@ char* runCommand(char* command)
 		fullpath[0] = '\0';
 		
 		answer = dirCreate(path, name);
+
 		if(answer == NULL) {
 			printf("Error creating directory\n");
 			return NULL;
@@ -149,10 +154,30 @@ char* runCommand(char* command)
 		char* path = params[1];
 		char* name = params[3];
 
-		dirRemove(path, name);
+		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
+		char* answer;
+		char  len[20];
+
+		fullpath[0] = '\0';
+
+		answer = dirRemove(path, name);
+
+		if (answer == NULL)
+		{
+			snprintf(len, 20, "%lu", 0);
+		}
+		else
+		{
+			snprintf(len, 20, "%lu", strlen(path));
+		}
 		
+		strcpy(fullpath, "DR-REP ");
+		strcat(fullpath, answer);
+		strcat(fullpath, " ");
+		strcat(fullpath, len);
+
 		// path(string), strlen(int)
-		return NULL;
+		return fullpath;
 	}
 
 	if(!strcmp(params[0], "DL-REQ"))
@@ -341,6 +366,16 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 
 	strcpy(fullpath, path);
 
+	if (nrbytes == 0)
+	{
+		if (remove(path) == -1)
+		{
+			printf("Error deleting file: %s\n", fullpath);
+		}
+
+		return 0;
+	}
+
 	written = pwrite(descriptor, payload, nrbytes, offset);
 	
 	return written;
@@ -399,12 +434,10 @@ static char* dirRemove(char* path, char* name)
 
 	if (!rmdir(fullpath))
 	{
-		printf("Error deleting directory\n");
+		return NULL;
 	}
 
-	free(fullpath);
-
-	return NULL;
+	return fullpath;
 }
 
 static void dirList(char* path)
