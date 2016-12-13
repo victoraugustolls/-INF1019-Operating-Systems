@@ -28,7 +28,6 @@ static void dirList(char* path); // TODO: return type
 
 static char* getDirectory();
 static int filesFilter(const struct dirent* nameList);
-static int parse(char *buff, int *cmd, char *name);
 static void error(char *msg);
 static int fileExist (char* filename);
 
@@ -258,12 +257,6 @@ static void runServer(int port)
         n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) &clientaddr, &clientlen);
         if (n < 0)
             error("ERROR in recvfrom");
-        
-        printf("server received %s\n", buf);
-
-        //parse(buf, &cmd, name);
-
-        printf("server received %s\n", buf);
         
         /* 
          * gethostbyaddr: determine who sent the datagram
@@ -497,17 +490,6 @@ static int filesFilter(const struct dirent* nameList)
 		return 0; 
 	else
 		return 1;
-}
-
-static int parse(char *buff, int *cmd, char *name) 
-{
-    char *cmdstr;
-
-    cmdstr = strtok(buff," ");
-    name = strtok(NULL,"\0");
-    *cmd = atoi(cmdstr);
-
-    return 1;
 }
 
 static void error(char *msg)
