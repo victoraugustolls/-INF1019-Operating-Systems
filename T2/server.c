@@ -29,10 +29,10 @@ char* runCommand(char* command)
         int nrbytes = atoi(params[3]);
         int offset = atoi(params[4]);
         
-        fileRead(path, nrbytes, offset);
+        payload = fileRead(path, nrbytes, offset);
 
         // path(string), strlen(int), payload (string), nrbytes lidos(int), offset igual ao do R-REQ(int)
-        return NULL;
+        return payload;
     }
     
     if(!strcmp(params[0], "WR-REQ"))
@@ -153,33 +153,56 @@ int main (void)
     return 0;
 }
 
-
 static char* fileRead(char* path, int nrbytes, int offset)
 {
     printf("fileRead -- path: %s, nrbytes: %d, offset: %d\n", path, nrbytes, offset);
+
+    int descriptor = open(fullPath, O_RDONLY);
+    char *fullPath = getDirectory();
+    char *payload;
+
+    fullPath = get_current_directory();
+    strcat(fullPath, path);
+
+    pread(descriptor, payload, numBytes, offset);
     
-    return strdup("fileContent");
+    return payload;
 }
 
 static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 {
     printf("fileWrite -- path: %s, payload: %s, nrbytes: %d,  offset: %d\n", path, payload, nrbytes, offset);
+
+    int descriptor = open(fullPath, O_WRONLY);
+    char* fullpath = getDirectory()
+
+    strcpy(fullpath, path);
+
+    pwrite(descriptor, payload, numBytes, offset);
     
     return 0;
 }
 
-
 static void fileInfo(char* path)
 {
+    struct stat sb;
+    char* fullPath = getDirectory();
+
     printf("fileInfo -- path: %s\n", path);
+
+    strcat(fullPath, path);
+
+    stat(fullPath, &sb);
+
+    return;
 }
-
-
 
 static char* dirCreate(char* path, char* name)
 {
     struct stat st = {0};
     char* fullpath = (char*)malloc((strlen(path) + strlen(name)) * sizeof(char));
+    mode_t permissao = S_IRWXU | S_IROTH | S_IWOTH | S_IXOTH;
+
     strcpy(fullpath, path);
     strcat(fullpath, "/");
     strcat(fullpath, name);
@@ -187,7 +210,7 @@ static char* dirCreate(char* path, char* name)
     printf("dirCreate -- path: %s, name: %s, fullpath: %s\n", path, name, fullpath);
 
     if (stat(fullpath, &st) == -1) {
-        if (mkdir(fullpath, 0700) != 0)
+        if (mkdir(fullpath, permissao) != 0)
         {
             printf("Error in mkdir\n");
             return NULL;
@@ -203,13 +226,56 @@ static char* dirCreate(char* path, char* name)
 
 static char* dirRemove(char* path, char* name)
 {
+    char* fullpath = getDirectory();
+
     printf("dirRemove -- path: %s, name: %s\n", path, name);
+
+    strcpy(fullpath, path);
+    strcat(fullpath, "/");
+    strcat(fullpath, name);
+
+    if (!rmdir(fullpath))
+    {
+        printf("Error deleting directory\n");
+    }
+
+    free(fullpath);
 
     return NULL;
 }
 
 static void dirList(char* path)
 {
+    char* fullpath = getDirectory();
+    int count;
+    struct dirent** nameList;
+
     printf("dirList -- path: %s\n", path);
+
+    strcat(fullpath, path);
+
+    count = scandir(fullpath, nameList, files, alphasort);
+    //quantidade de arquivos no diretorio
+
 }
 
+static char* getDirectory()
+{
+    char* currentDir = (char*)malloc(BUFFER*sizeof(char)) ;
+
+    if (getwd(currentDir) == NULL )
+    {
+      printf("Error getting path\n"); 
+      exit(0);
+    }
+
+    return currentDir;
+}
+
+static int files(const struct dirent* nameList)
+{
+    if ((entry->d_type == DT_DIR) ||(strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0) )  
+        return 0; 
+    else
+        return 1;
+}
