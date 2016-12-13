@@ -30,6 +30,7 @@ static char* getDirectory();
 static int filesFilter(const struct dirent* nameList);
 static int parse(char *buff, int *cmd, char *name);
 static void error(char *msg);
+static int fileExist (char* filename);
 
 char* runCommand(char* command)
 {
@@ -164,7 +165,7 @@ char* runCommand(char* command)
 
 		if (answer == NULL)
 		{
-			snprintf(len, 20, "%lu", 0);
+			snprintf(len, 20, "%d", 0);
 		}
 		else
 		{
@@ -364,12 +365,19 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 {
 	char* fullpath = getDirectory();
-	int descriptor = open(fullpath, O_WRONLY);
+	FILE* new;
+	int descriptor;
 	int written;
 
 	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d,  offset: %d\n", path, payload, nrbytes, offset);
 
 	strcpy(fullpath, path);
+
+	if (!fileExist(fullpath))
+	{
+		new = fopen(fullpath, "wb");
+		fclose(new);
+	}
 
 	if (nrbytes == 0)
 	{
@@ -380,6 +388,8 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 
 		return 0;
 	}
+
+	descriptor = open(fullpath, O_WRONLY);
 
 	written = pwrite(descriptor, payload, nrbytes, offset);
 	
@@ -496,4 +506,10 @@ static void error(char *msg)
 {
     perror(msg);
     exit(1);
+}
+
+static int fileExist (char* filename)
+{
+  struct stat buffer;   
+  return stat(filename, &buffer) == 0;
 }
