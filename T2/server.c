@@ -28,7 +28,7 @@ static void dirList(char* path); // TODO: return type
 
 static char* getDirectory();
 static int filesFilter(const struct dirent* nameList);
-static int parse (char *buff, int *cmd, char *name);
+static int parse(char *buff, int *cmd, char *name);
 static void error(char *msg);
 
 char* runCommand(char* command)
@@ -149,7 +149,7 @@ char* runCommand(char* command)
 	return NULL;
 }
 
-static void runServer()
+static void runServer(int port)
 {
     int sockfd; /* socket */
     int portno; /* port to listen on */
@@ -165,15 +165,7 @@ static void runServer()
     char name[BUFSIZE];   // name of the file received from client
     int cmd;              // cmd received from client
     
-    /* 
-     * check command line arguments 
-     */
-    if (argc != 2) 
-    {
-        fprintf(stderr, "usage: %s <port>\n", argv[0]);
-        exit(1);
-    }
-    portno = atoi(argv[1]);
+    portno = port;
     
     /* 
      * socket: create the parent socket 
@@ -245,7 +237,7 @@ static void runServer()
 }
 
 
-int main (void)
+int main(int argc, char **argv)
 {
 	char* command;
 	
@@ -282,6 +274,19 @@ int main (void)
 	command = strdup("DL-REQ path/to/file 5");
 	runCommand(command);
 	free(command);
+
+
+    /* 
+     * check command line arguments 
+     */
+    if (argc != 2) 
+    {
+        fprintf(stderr, "usage: %s <port>\n", argv[0]);
+        exit(1);
+    }
+    int portno = atoi(argv[1]);
+
+    runServer(portno);
 
 	return 0;
 }
@@ -417,7 +422,7 @@ static int filesFilter(const struct dirent* nameList)
 		return 1;
 }
 
-static int parse (char *buff, int *cmd, char *name) 
+static int parse(char *buff, int *cmd, char *name) 
 {
     char *cmdstr;
 
