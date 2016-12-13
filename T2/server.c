@@ -80,11 +80,31 @@ char* runCommand(char* command)
 		char* payload = params[3];
 		int nrbytes = atoi(params[4]);
 		int offset = atoi(params[5]);
+
+		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
+		char len2[20];
+		char bt[20];
 		
-		fileWrite(path, payload, nrbytes, offset);
+		nrbytes = fileWrite(path, payload, nrbytes, offset);
+
+		if (nrbytes == -1)
+		{
+			printf("Error writing in file\n");
+			return NULL;
+		}
+
+		snprintf(len2, 20, "%lu", strlen(payload));
+		snprintf(bt, 20, "%d", nrbytes);
+
+		strcpy(fullpath, "WR-REP ");
+		strcat(fullpath, len2);
+		strcat(fullpath, " ");
+		strcat(fullpath, bt);
+		strcat(fullpath, " ");
+		strcat(fullpath, params[4]);
 		
 		// path (string), strlen(int), payload(string vazio), nrbytes escritos (int), offset igual ao do W-REQ(int)
-		return NULL;
+		return fullpath;
 	}
 	
 	if(!strcmp(params[0], "FI-REQ"))
@@ -310,14 +330,15 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 {
 	char* fullpath = getDirectory();
 	int descriptor = open(fullpath, O_WRONLY);
+	int written;
 
 	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d,  offset: %d\n", path, payload, nrbytes, offset);
 
 	strcpy(fullpath, path);
 
-	pwrite(descriptor, payload, nrbytes, offset);
+	written = pwrite(descriptor, payload, nrbytes, offset);
 	
-	return 0;
+	return written;
 }
 
 static void fileInfo(char* path)
