@@ -165,6 +165,8 @@ char* runCommand(char* command)
 
 		answer = dirRemove(path, name);
 
+		printf("Answer: %s\n", answer);
+
 		if (answer == NULL)
 		{
 			snprintf(len, 20, "%d", 0);
@@ -173,9 +175,11 @@ char* runCommand(char* command)
 		{
 			snprintf(len, 20, "%lu", strlen(path));
 		}
+
+		printf("Tamanho do path: %s\n", len);
 		
 		strcpy(fullpath, "DR-REP ");
-		strcat(fullpath, answer);
+		strcat(fullpath, path);
 		strcat(fullpath, " ");
 		strcat(fullpath, len);
 
@@ -455,7 +459,7 @@ static char* dirRemove(char* path, char* name)
 	strcat(fullpath, "/");
 	strcat(fullpath, name);
 
-	if (!rmdir(fullpath))
+	if (rmdir(fullpath) == -1)
 	{
 		return NULL;
 	}
