@@ -35,8 +35,9 @@ static int fileExist (char* filename);
 char* runCommand(char* command)
 {
 	char* params[6];
-	
-	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++);
+
+	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++)
+        ;
 	
 	if(!strcmp(params[0], "RD-REQ"))
 	{
@@ -256,8 +257,12 @@ static void runServer(int port)
         n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) &clientaddr, &clientlen);
         if (n < 0)
             error("ERROR in recvfrom");
-      
-        parse(buf, &cmd, name);
+        
+        printf("server received %s\n", buf);
+
+        //parse(buf, &cmd, name);
+
+        printf("server received %s\n", buf);
         
         /* 
          * gethostbyaddr: determine who sent the datagram
