@@ -271,11 +271,16 @@ static void runServer(int port)
     
         printf("server received datagram from %s (%s)\n",  hostp->h_name, hostaddrp);
         printf("server received %lu/%d bytes: %s\n", strlen(buf), n, buf);
-    
+
+        char* reply;
+        if( !(reply = runCommand(buf)) ) {
+            reply = strdup("Error: could not understand command!");
+        }
+        
         /* 
          * sendto: echo the input back to the client 
          */
-        n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *) &clientaddr, clientlen);
+        n = sendto(sockfd, reply, strlen(reply), 0, (struct sockaddr *) &clientaddr, clientlen);
         if (n < 0) 
             error("ERROR in sendto");
     }
