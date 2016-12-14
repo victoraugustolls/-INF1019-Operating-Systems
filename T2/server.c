@@ -350,11 +350,13 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 {
 	char *fullPath = getDirectory();
 	char *payload;
-	int descriptor = open(fullPath, O_RDONLY);
+	int descriptor;
 
 	printf("fileRead -- path: %s, nrbytes: %d, offset: %d\n", path, *nrbytes, offset);
 
 	strcat(fullPath, path);
+
+	descriptor = open(fullPath, O_RDONLY);
 
 	*nrbytes = pread(descriptor, payload, *nrbytes, offset);
 
@@ -373,7 +375,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 	int descriptor;
 	int written;
 
-	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d,  offset: %d\n", path, payload, nrbytes, offset);
+	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d, offset: %d\n", path, payload, nrbytes, offset);
 
 	strcpy(fullpath, path);
 
