@@ -348,19 +348,19 @@ int main(int argc, char **argv)
 
 static char* fileRead(char* path, int* nrbytes, int offset)
 {
-	char *fullPath = getDirectory();
-	char *payload;
+	char *payload = (char*)malloc(BUFSIZE * sizeof(char));
 	int descriptor;
+	int bytes;
 
 	printf("fileRead -- path: %s, nrbytes: %d, offset: %d\n", path, *nrbytes, offset);
 
-	strcat(fullPath, path);
+	descriptor = open(path, O_RDONLY);
 
-	descriptor = open(fullPath, O_RDONLY);
+	bytes = pread(descriptor, payload, *nrbytes, offset);
 
-	*nrbytes = pread(descriptor, payload, *nrbytes, offset);
+	*nrbytes = bytes;
 
-	if (*nrbytes == -1)
+	if (bytes == -1)
 	{
 		return NULL;
 	}
@@ -370,18 +370,15 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 
 static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 {
-	char* fullpath = getDirectory();
 	FILE* new;
+	struct stat buf;
 	int descriptor;
 	int written;
+	int size;
 
-	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d, offset: %d\n", path, payload, nrbytes, offset);
-
-	strcpy(fullpath, path);
-
-	if (!fileExist(fullpath))
+	if (!fileExist(path))
 	{
-		new = fopen(fullpath, "wb");
+		new = fopen(path, "wb");
 		fclose(new);
 	}
 
@@ -389,13 +386,20 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset)
 	{
 		if (remove(path) == -1)
 		{
-			printf("Error deleting file: %s\n", fullpath);
+			printf("Error deleting file: %s\n", path);
 		}
 
 		return 0;
 	}
 
-	descriptor = open(fullpath, O_WRONLY);
+	stat(path, &buf);
+	size = buf.st_size;
+
+	offset = size < offset ? size : offset;
+
+	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d, offset: %d\n", path, payload, nrbytes, offset);
+
+	descriptor = open(path, O_WRONLY);
 
 	written = pwrite(descriptor, payload, nrbytes, offset);
 	
