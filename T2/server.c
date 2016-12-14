@@ -47,7 +47,7 @@ char* runCommand(char* command)
 		int offset = atoi(params[4]);
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
-		char len2[20];
+		char lenPath[20];
 		char bt[20];
 
 		fullpath[0] = '\0';
@@ -60,11 +60,13 @@ char* runCommand(char* command)
 			return NULL;
 		}
 
-		snprintf(len2, 20, "%lu", strlen(payload));
+		snprintf(lenPath, 20, "%lu", strlen(path));
 		snprintf(bt, 20, "%d", nrbytes);
 
 		strcpy(fullpath, "RD-REP ");
-		strcat(fullpath, len2);
+		strcat(fullpath, path);
+		strcat(fullpath, " ");
+		strcat(fullpath, lenPath);
 		strcat(fullpath, " ");
 		strcat(fullpath, payload);
 		strcat(fullpath, " ");
@@ -85,7 +87,7 @@ char* runCommand(char* command)
 		int offset = atoi(params[5]);
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
-		char len2[20];
+		char lenPath[20];
 		char bt[20];
 
 		fullpath[0] = '\0';
@@ -98,11 +100,13 @@ char* runCommand(char* command)
 			return NULL;
 		}
 
-		snprintf(len2, 20, "%lu", strlen(payload));
+		snprintf(lenPath, 20, "%lu", strlen(path));
 		snprintf(bt, 20, "%d", nrbytes);
 
 		strcpy(fullpath, "WR-REP ");
-		strcat(fullpath, len2);
+		strcat(fullpath, path);
+		strcat(fullpath, " ");
+		strcat(fullpath, lenPath);
 		strcat(fullpath, " ");
 		strcat(fullpath, bt);
 		strcat(fullpath, " ");
@@ -432,14 +436,16 @@ static char* dirCreate(char* path, char* name)
 	strcat(fullpath, "/");
 	strcat(fullpath, name);
 
-	if (stat(fullpath, &st) == -1) {
+	if (stat(fullpath, &st) == -1) 
+	{
 		if (mkdir(fullpath, permissao) != 0)
 		{
 			printf("Error in mkdir\n");
 			return NULL;
 		}
 	}
-	else {
+	else 
+	{
 		printf("Stat error\n");
 		return NULL;
 	}
