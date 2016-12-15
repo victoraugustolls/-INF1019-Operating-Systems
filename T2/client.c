@@ -61,6 +61,7 @@ int main(int argc, char **argv)
 
     while(1) 
     {
+        printf("-------------------------------\n\n");
         /* get a message from the user */
         bzero(buf, BUFSIZE);
         printf("Enter command:\n");
@@ -82,7 +83,9 @@ int main(int argc, char **argv)
             error("ERROR in recvfrom");
         //buf[n] = '\0';
 
-        printf("Server reply:\n%s\n", buf);
+        printf("Server reply:\n%s\n\n", buf);
+
+        printf("-------------------------------");
 
         sleep(2);
     }

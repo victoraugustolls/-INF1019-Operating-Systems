@@ -86,7 +86,6 @@ char* runCommand(char* command)
 		strcat(fullpath, " ");
 		strcat(fullpath, params[4]);
 
-
 		printf("Response: %s\n", fullpath);
 
 		// path(string), strlen(int), payload (string), nrbytes lidos(int), offset igual ao do R-REQ(int)
@@ -431,14 +430,27 @@ static char* fileRead(char* path, int* nrbytes, int offset, int client)
 static int fileWrite(char* path, char* payload, int nrbytes, int offset, int client)
 {
 	FILE* new;
-	FILE* newHidden;
 	struct stat buf;
 	int descriptor;
 	int written;
 	int size;
+
+	//Client
+	char* pathdup = strdup(path);
+	char* nameWithDot;
+	char* name;
+	char* aux;
+	int clientId;
+
+	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
+	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
+	strcpy(nameWithDot, ".");
+	strcat(nameWithDot, name);
+	//
 	
 	if (!fileExist(path))
 	{
+		printf("bananas\n");
 		char* pathdup = strdup(path);
 		char pathWithDot[BUFFER];
 		char* nameWithDot;
@@ -455,14 +467,23 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, int cli
 		pathWithDot[strlen(pathWithDot) - strlen(name)] = '\0';
 		strcat(pathWithDot, nameWithDot);
 
-		
-
 		printf("path: %s / pathWithDot: %s / name: %s\n", path, pathWithDot, name);
 
 		new = fopen(path, "wb");
 		fclose(new);
 		new = fopen(pathWithDot, "wb");
 		fprintf(new, "%d", client);
+		fclose(new);
+	}
+	else
+	{
+		new = fopen(nameWithDot, "rb");
+		fscanf(new, "%d", &clientId);
+		if (clientId != client)
+		{
+			fclose(new);
+			return 0;
+		}
 		fclose(new);
 	}
 
