@@ -42,6 +42,8 @@ char* runCommand(char* command)
 			return "ERROR: to many parameters!";
 	}
 
+	//return NULL;
+
     printf("PARAM %d\n", param_num);
 	if(!strcmp(params[0], "RD-REQ"))
 	{
@@ -93,6 +95,7 @@ char* runCommand(char* command)
 	
 	if(!strcmp(params[0], "WR-REQ"))
 	{
+		//return NULL;
 		if(param_num != 7)
 			return "ERROR: wrong number of parameters";
 
@@ -104,8 +107,8 @@ char* runCommand(char* command)
 		int client = atoi(params[6]);
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
-		char lenPath[20];
-		char bt[20];
+		char lenPath[BUFFER];
+		char bt[BUFFER];
 
 		fullpath[0] = '\0';
 		
@@ -306,7 +309,7 @@ static void runServer(int port)
         printf("Server received %lu/%d bytes: %s\n", strlen(buf), n, buf);
 
         char* reply;
-        if( !(reply = runCommand(buf)) ) {
+        if( !(reply = runCommand(strdup(buf)))) {
             reply = strdup("Error: could not understand command!");
         }
         printf("Reply: %s\n", reply);
@@ -437,6 +440,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, int cli
 	if (!fileExist(path))
 	{
 		char* pathdup = strdup(path);
+		char pathWithDot[BUFFER];
 		char* nameWithDot;
 		char* name;
 		char* aux;
@@ -447,11 +451,17 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, int cli
 		strcpy(nameWithDot, ".");
 		strcat(nameWithDot, name);
 
-		printf("path: %s / aux: %s / name: %s\n", path, aux, name);
+		strcpy(pathWithDot, path);
+		pathWithDot[strlen(pathWithDot) - strlen(name)] = '\0';
+		strcat(pathWithDot, nameWithDot);
+
+		
+
+		printf("path: %s / pathWithDot: %s / name: %s\n", path, pathWithDot, name);
 
 		new = fopen(path, "wb");
 		fclose(new);
-		new = fopen(nameWithDot, "wb");
+		new = fopen(pathWithDot, "wb");
 		fprintf(new, "%d", client);
 		fclose(new);
 	}
