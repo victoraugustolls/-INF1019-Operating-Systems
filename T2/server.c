@@ -425,31 +425,42 @@ static char* fileRead(char* path, int* nrbytes, int offset, int client)
 static int fileWrite(char* path, char* payload, int nrbytes, int offset, int client)
 {
 	FILE* new;
-	FILE* newHidden;
 	struct stat buf;
 	int descriptor;
 	int written;
 	int size;
+
+	//Client
+	char* pathdup = strdup(path);
+	char* nameWithDot;
+	char* name;
+	char* aux;
+	int clientId;
+
+	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
+	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
+	strcpy(nameWithDot, ".");
+	strcat(nameWithDot, name);
+	//
 	
 	if (!fileExist(path))
 	{
-		char* pathdup = strdup(path);
-		char* nameWithDot;
-		char* name;
-		char* aux;
-
-		while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
-
-		nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
-		strcpy(nameWithDot, ".");
-		strcat(nameWithDot, name);
-
 		printf("path: %s / aux: %s / name: %s\n", path, aux, name);
-
 		new = fopen(path, "wb");
 		fclose(new);
 		new = fopen(nameWithDot, "wb");
 		fprintf(new, "%d", client);
+		fclose(new);
+	}
+	else
+	{
+		new = fopen(nameWithDot, "rb");
+		fscanf(new, "%d", &clientId);
+		if (clientId != client)
+		{
+			fclose(new);
+			return 0;
+		}
 		fclose(new);
 	}
 
