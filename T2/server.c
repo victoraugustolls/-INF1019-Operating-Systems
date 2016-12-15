@@ -301,7 +301,7 @@ static void runServer(int port)
         /* 
          * sendto: echo the input back to the client 
          */
-        n = sendto(sockfd, reply, strlen(reply), 0, (struct sockaddr *) &clientaddr, clientlen);
+        n = sendto(sockfd, reply, strlen(reply) + 1, 0, (struct sockaddr *) &clientaddr, clientlen);
         if (n < 0) 
             error("ERROR in sendto");
     }
