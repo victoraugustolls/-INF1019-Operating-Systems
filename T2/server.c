@@ -92,7 +92,7 @@ char* runCommand(char* command, char* client)
 
 		fullpath[0] = '\0';
 		
-		nrbytes = fileWrite(path, payload, nrbytes, offset);
+		nrbytes = fileWrite(path, payload, nrbytes, offset, client);
 
 		if (nrbytes == -1)
 		{
@@ -380,14 +380,20 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	int descriptor;
 	int written;
 	int size;
-	char* name = (char*)malloc((strlen(path)+2)*sizeof(char));
+	char* fullpath;
+	char* aux;
+	char* name;
 
+	fullpath = strdup(path);
+	while((aux = strsep(&path, "/")) != NULL);
+	name = (char*)malloc((strlen(aux)+2)*sizeof(char));
 	strcpy(name, ".");
-	strcat(name, path);
+	strcat(name, aux);
+	printf("path: %s / aux: %s / name: %s\n", fullpath, aux, name);
 
-	if (!fileExist(path))
+	if (!fileExist(fullpath))
 	{
-		new = fopen(path, "wb");
+		new = fopen(fullpath, "wb");
 		fclose(new);
 		new = fopen(name, "wb");
 		fprintf(new, "%s", client);
@@ -396,9 +402,9 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 
 	if (nrbytes == 0)
 	{
-		if (remove(path) == -1)
+		if (remove(fullpath) == -1)
 		{
-			printf("Error deleting file: %s\n", path);
+			printf("Error deleting file: %s\n", fullpath);
 		}
 
 		return 0;
@@ -409,9 +415,9 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 
 	offset = size < offset ? size : offset;
 
-	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d, offset: %d\n", path, payload, nrbytes, offset);
+	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d, offset: %d\n", fullpath, payload, nrbytes, offset);
 
-	descriptor = open(path, O_WRONLY);
+	descriptor = open(fullpath, O_WRONLY);
 
 	written = pwrite(descriptor, payload, nrbytes, offset);
 	
