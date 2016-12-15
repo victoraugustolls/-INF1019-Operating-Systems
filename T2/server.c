@@ -18,8 +18,8 @@
 #define BUFSIZE 1024
 
 
-static char* fileRead(char* path, int *nrbytes, int offset);
-static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client);
+static char* fileRead(char* path, int *nrbytes, int offset, int client);
+static int fileWrite(char* path, char* payload, int nrbytes, int offset, int client);
 static void fileInfo(char* path); // TODO: return type
 
 static char* dirCreate(char* path, char* name);
@@ -31,9 +31,9 @@ static int filesFilter(const struct dirent* nameList);
 static void error(char *msg);
 static int fileExist (char* filename);
 
-char* runCommand(char* command, char* client)
+char* runCommand(char* command)
 {
-	char* params[6];
+	char* params[7];
 
 	int param_num = 0;
 	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++, param_num++)
@@ -42,7 +42,7 @@ char* runCommand(char* command, char* client)
     printf("PARAM %d\n", param_num);
 	if(!strcmp(params[0], "RD-REQ"))
 	{
-		if(param_num != 4)
+		if(param_num != 6)
 			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
@@ -50,6 +50,7 @@ char* runCommand(char* command, char* client)
 		char* payload;
 		int nrbytes = atoi(params[3]);
 		int offset = atoi(params[4]);
+		int client = atoi(params[5]);
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char lenPath[20];
@@ -57,7 +58,8 @@ char* runCommand(char* command, char* client)
 
 		fullpath[0] = '\0';
 		
-		payload = fileRead(path, &nrbytes, offset);
+		payload = fileRead(path, &nrbytes, offset, client);
+		printf("Payload: %s\n", payload);
 
 		if (payload == NULL)
 		{
@@ -79,13 +81,16 @@ char* runCommand(char* command, char* client)
 		strcat(fullpath, " ");
 		strcat(fullpath, params[4]);
 
+
+		printf("Response: %s\n", fullpath);
+
 		// path(string), strlen(int), payload (string), nrbytes lidos(int), offset igual ao do R-REQ(int)
 		return fullpath;
 	}
 	
 	if(!strcmp(params[0], "WR-REQ"))
 	{
-		if(param_num != 6)
+		if(param_num != 7)
 			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
@@ -93,6 +98,7 @@ char* runCommand(char* command, char* client)
 		char* payload = params[3];
 		int nrbytes = atoi(params[4]);
 		int offset = atoi(params[5]);
+		int client = atoi(params[6]);
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char lenPath[20];
@@ -101,6 +107,7 @@ char* runCommand(char* command, char* client)
 		fullpath[0] = '\0';
 		
 		nrbytes = fileWrite(path, payload, nrbytes, offset, client);
+		printf("Bytes Written Response: %d\n", nrbytes);
 
 		if (nrbytes == -1)
 		{
@@ -119,6 +126,8 @@ char* runCommand(char* command, char* client)
 		strcat(fullpath, bt);
 		strcat(fullpath, " ");
 		strcat(fullpath, params[4]);
+
+		printf("Response: %s\n", fullpath);
 		
 		// path (string), strlen(int), payload(string vazio), nrbytes escritos (int), offset igual ao do W-REQ(int)
 		return fullpath;
@@ -294,7 +303,7 @@ static void runServer(int port)
         printf("Server received %lu/%d bytes: %s\n", strlen(buf), n, buf);
 
         char* reply;
-        if( !(reply = runCommand(buf, hostp->h_name)) ) {
+        if( !(reply = runCommand(buf)) ) {
             reply = strdup("Error: could not understand command!");
         }
         
@@ -364,11 +373,36 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-static char* fileRead(char* path, int* nrbytes, int offset)
+static char* fileRead(char* path, int* nrbytes, int offset, int client)
 {
+	FILE* control;
 	char *payload = (char*)malloc(BUFSIZE * sizeof(char));
 	int descriptor;
 	int bytes;
+
+	//Check client
+	int clientId;
+	char* pathdup = strdup(path);
+	char* nameWithDot;
+	char* name;
+	char* aux;
+
+	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
+
+	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
+	strcpy(nameWithDot, ".");
+	strcat(nameWithDot, name);
+
+	control = fopen(nameWithDot, "rb");
+	fscanf(control, "%d", &clientId);
+	if (clientId != client)
+	{
+		fclose(control);
+		*nrbytes = 0;
+		return "Cliente nao autorizado";
+	}
+	fclose(control);
+	//
 
 	printf("fileRead -- path: %s, nrbytes: %d, offset: %d\n", path, *nrbytes, offset);
 
@@ -386,7 +420,7 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 	return payload;
 }
 
-static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client)
+static int fileWrite(char* path, char* payload, int nrbytes, int offset, int client)
 {
 	FILE* new;
 	FILE* newHidden;
@@ -413,7 +447,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		new = fopen(path, "wb");
 		fclose(new);
 		new = fopen(nameWithDot, "wb");
-		fprintf(new, "%s", client);
+		fprintf(new, "%d", client);
 		fclose(new);
 	}
 
@@ -436,7 +470,11 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 
 	descriptor = open(path, O_WRONLY);
 
+	printf("Passed descriptor\n");
+
 	written = pwrite(descriptor, payload, nrbytes, offset);
+
+	printf("Bytes written: %d\n", written);
 	
 	return written;
 }
