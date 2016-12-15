@@ -39,11 +39,11 @@ char* runCommand(char* command, char* client)
 	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++, param_num++)
         ;
 
-
+    printf("PARAM %d\n", param_num);
 	if(!strcmp(params[0], "RD-REQ"))
 	{
 		if(param_num != 4)
-			return "ERROR: wrong number of parameters"
+			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
 		int len = atoi(params[2]);
@@ -85,8 +85,8 @@ char* runCommand(char* command, char* client)
 	
 	if(!strcmp(params[0], "WR-REQ"))
 	{
-		if(param_num != 5)
-			return "ERROR: wrong number of parameters"
+		if(param_num != 6)
+			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
 		int len = atoi(params[2]);
@@ -136,8 +136,8 @@ char* runCommand(char* command, char* client)
 	
 	if(!strcmp(params[0], "DC-REQ")) // OK!
 	{
-		if(param_num != 3)
-			return "ERROR: wrong number of parameters"
+		if(param_num != 5)
+			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
 		char* name = params[3];
@@ -168,8 +168,8 @@ char* runCommand(char* command, char* client)
 
 	if(!strcmp(params[0], "DR-REQ")) // OK!
 	{
-		if(param_num != 3)
-			return "ERROR: wrong number of parameters"
+		if(param_num != 5)
+			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
 		char* name = params[3];
@@ -395,21 +395,25 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	int written;
 	int size;
 	char* fullpath;
-	char* aux;
-	char* name;
-
-	fullpath = strdup(path);
-	while((aux = strsep(&path, "/")) != NULL);
-	name = (char*)malloc((strlen(aux)+2)*sizeof(char));
-	strcpy(name, ".");
-	strcat(name, aux);
-	printf("path: %s / aux: %s / name: %s\n", fullpath, aux, name);
-
+	
 	if (!fileExist(fullpath))
 	{
+		char* nameWithDot;
+		char* name;
+		char* aux;
+
+		fullpath = strdup(path);
+		while((aux = strsep(&path, "/")) != NULL) name = aux;
+
+		nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
+		strcpy(nameWithDot, ".");
+		strcat(nameWithDot, name);
+
+		printf("path: %s / aux: %s / name: %s\n", fullpath, aux, name);
+
 		new = fopen(fullpath, "wb");
 		fclose(new);
-		new = fopen(name, "wb");
+		new = fopen(nameWithDot, "wb");
 		fprintf(new, "%s", client);
 		fclose(new);
 	}
