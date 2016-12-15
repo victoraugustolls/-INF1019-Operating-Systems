@@ -146,7 +146,7 @@ char* runCommand(char* command)
 	if(!strcmp(params[0], "DC-REQ")) // OK!
 	{
 		if(param_num != 5)
-			return "ERROR: wrong number of parameters";
+			return "ERROR: wrong number of parameters\n";
 
 		char* path = params[1];
 		char* name = params[3];
@@ -161,7 +161,7 @@ char* runCommand(char* command)
 
 		if(answer == NULL) {
 			printf("Error creating directory\n");
-			return "Error creating directory";
+			return "Error creating directory\n";
 		}
 
 		snprintf(len, 20, "%lu", strlen(answer));
@@ -310,7 +310,7 @@ static void runServer(int port)
         /* 
          * sendto: echo the input back to the client 
          */
-        n = sendto(sockfd, reply, strlen(reply), 0, (struct sockaddr *) &clientaddr, clientlen);
+        n = sendto(sockfd, reply, strlen(reply) + 1, 0, (struct sockaddr *) &clientaddr, clientlen);
         if (n < 0) 
             error("ERROR in sendto");
     }

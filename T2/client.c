@@ -80,8 +80,9 @@ int main(int argc, char **argv)
         n = recvfrom(sockfd, buf, 1024, 0, (struct sockaddr *) &serveraddr, &serverlen);
         if (n < 0) 
             error("ERROR in recvfrom");
+        //buf[n] = '\0';
 
-        printf("Server reply:\n %s\n", buf);
+        printf("Server reply:\n%s\n", buf);
 
         sleep(2);
     }
