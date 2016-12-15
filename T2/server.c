@@ -84,7 +84,6 @@ char* runCommand(char* command)
 		strcat(fullpath, " ");
 		strcat(fullpath, params[4]);
 
-
 		printf("Response: %s\n", fullpath);
 
 		// path(string), strlen(int), payload (string), nrbytes lidos(int), offset igual ao do R-REQ(int)
