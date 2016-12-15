@@ -42,7 +42,7 @@ char* runCommand(char* command, char* client)
     printf("PARAM %d\n", param_num);
 	if(!strcmp(params[0], "RD-REQ"))
 	{
-		if(param_num != 4)
+		if(param_num != 5)
 			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
@@ -137,7 +137,7 @@ char* runCommand(char* command, char* client)
 	if(!strcmp(params[0], "DC-REQ")) // OK!
 	{
 		if(param_num != 5)
-			return "ERROR: wrong number of parameters";
+			return "ERROR: wrong number of parameters\n";
 
 		char* path = params[1];
 		char* name = params[3];
@@ -152,7 +152,7 @@ char* runCommand(char* command, char* client)
 
 		if(answer == NULL) {
 			printf("Error creating directory\n");
-			return "Error creating directory";
+			return "Error creating directory\n";
 		}
 
 		snprintf(len, 20, "%lu", strlen(answer));
