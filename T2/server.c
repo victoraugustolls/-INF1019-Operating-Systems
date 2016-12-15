@@ -37,7 +37,10 @@ char* runCommand(char* command)
 
 	int param_num = 0;
 	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++, param_num++)
-        ;
+	{
+		if(i==7)
+			return "ERROR: to many parameters!";
+	}
 
     printf("PARAM %d\n", param_num);
 	if(!strcmp(params[0], "RD-REQ"))
