@@ -63,8 +63,12 @@ int main(int argc, char **argv)
     {
         /* get a message from the user */
         bzero(buf, BUFSIZE);
-        printf("Enter command: ");
-        fgets(buf, BUFSIZE, stdin);
+        printf("Enter command:\n");
+        if(!fgets(buf, BUFSIZE, stdin))
+        {
+            break;
+        }
+        printf("Command: %s\n", buf);
 
         /* send the message to the server */
         serverlen = sizeof(serveraddr);
@@ -77,7 +81,9 @@ int main(int argc, char **argv)
         if (n < 0) 
             error("ERROR in recvfrom");
 
-        printf("\tServer reply:\n %s\n", buf);
+        printf("Server reply:\n %s\n", buf);
+
+        sleep(2);
     }
 
     return 0;
