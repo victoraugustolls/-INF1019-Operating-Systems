@@ -35,11 +35,16 @@ char* runCommand(char* command, char* client)
 {
 	char* params[6];
 
-	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++)
+	int param_num = 0;
+	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++, param_num++)
         ;
-	
+
+
 	if(!strcmp(params[0], "RD-REQ"))
 	{
+		if(param_num != 4)
+			return "ERROR: wrong number of parameters"
+
 		char* path = params[1];
 		int len = atoi(params[2]);
 		char* payload;
@@ -80,6 +85,9 @@ char* runCommand(char* command, char* client)
 	
 	if(!strcmp(params[0], "WR-REQ"))
 	{
+		if(param_num != 5)
+			return "ERROR: wrong number of parameters"
+
 		char* path = params[1];
 		int len = atoi(params[2]);
 		char* payload = params[3];
@@ -128,6 +136,9 @@ char* runCommand(char* command, char* client)
 	
 	if(!strcmp(params[0], "DC-REQ")) // OK!
 	{
+		if(param_num != 3)
+			return "ERROR: wrong number of parameters"
+
 		char* path = params[1];
 		char* name = params[3];
 
@@ -141,7 +152,7 @@ char* runCommand(char* command, char* client)
 
 		if(answer == NULL) {
 			printf("Error creating directory\n");
-			return NULL;
+			return "Error creating directory";
 		}
 
 		snprintf(len, 20, "%lu", strlen(answer));
@@ -157,6 +168,9 @@ char* runCommand(char* command, char* client)
 
 	if(!strcmp(params[0], "DR-REQ")) // OK!
 	{
+		if(param_num != 3)
+			return "ERROR: wrong number of parameters"
+
 		char* path = params[1];
 		char* name = params[3];
 
