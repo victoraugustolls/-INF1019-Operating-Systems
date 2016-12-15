@@ -19,7 +19,7 @@
 
 
 static char* fileRead(char* path, int *nrbytes, int offset);
-static int fileWrite(char* path, char* payload, int nrbytes, int offset);
+static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client);
 static void fileInfo(char* path); // TODO: return type
 
 static char* dirCreate(char* path, char* name);
@@ -31,7 +31,7 @@ static int filesFilter(const struct dirent* nameList);
 static void error(char *msg);
 static int fileExist (char* filename);
 
-char* runCommand(char* command)
+char* runCommand(char* command, char* client)
 {
 	char* params[6];
 
@@ -280,7 +280,7 @@ static void runServer(int port)
         printf("Server received %lu/%d bytes: %s\n", strlen(buf), n, buf);
 
         char* reply;
-        if( !(reply = runCommand(buf)) ) {
+        if( !(reply = runCommand(buf, hostp->h_name)) ) {
             reply = strdup("Error: could not understand command!");
         }
         
@@ -372,17 +372,25 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 	return payload;
 }
 
-static int fileWrite(char* path, char* payload, int nrbytes, int offset)
+static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client)
 {
 	FILE* new;
+	FILE* newHidden;
 	struct stat buf;
 	int descriptor;
 	int written;
 	int size;
+	char* name = (char*)malloc((strlen(path)+2)*sizeof(char));
+
+	strcpy(name, ".");
+	strcat(name, path);
 
 	if (!fileExist(path))
 	{
 		new = fopen(path, "wb");
+		fclose(new);
+		new = fopen(name, "wb");
+		fprintf(new, "%s", client);
 		fclose(new);
 	}
 
