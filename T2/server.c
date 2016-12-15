@@ -33,7 +33,7 @@ static int fileExist (char* filename);
 
 char* runCommand(char* command)
 {
-	char* params[7];
+	char* params[8];
 
 	int param_num = 0;
 	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++, param_num++)
@@ -306,6 +306,7 @@ static void runServer(int port)
         if( !(reply = runCommand(buf)) ) {
             reply = strdup("Error: could not understand command!");
         }
+        printf("Reply: %s\n", reply);
         
         /* 
          * sendto: echo the input back to the client 
@@ -313,6 +314,7 @@ static void runServer(int port)
         n = sendto(sockfd, reply, strlen(reply) + 1, 0, (struct sockaddr *) &clientaddr, clientlen);
         if (n < 0) 
             error("ERROR in sendto");
+        printf("Answer sent\n");
     }
 }
 
