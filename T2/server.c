@@ -24,7 +24,7 @@ static void fileInfo(char* path); // TODO: return type
 
 static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char* otherPerm);
 static char* dirRemove(char* path, char* name);
-static void dirList(char* path); // TODO: return type
+static char* dirList(char* path);
 
 static char* getDirectory();
 static int filesFilter(const struct dirent* nameList);
@@ -119,7 +119,11 @@ char* runCommand(char* command)
 		if (nrbytes == -1)
 		{
 			printf("Error writing in file\n");
-			return NULL;
+			return "Error writing in file\n";
+		}
+		if(nrbytes == -3) {
+			printf("ERROR: permission denied\n");
+			return "ERROR: permission denied\n";
 		}
 
 		snprintf(lenPath, 20, "%lu", strlen(path));
@@ -223,11 +227,16 @@ char* runCommand(char* command)
 	if(!strcmp(params[0], "DL-REQ"))
 	{
 		char* path = params[1];
+
+		char* rep = (char*)malloc(BUFFER * sizeof(char));
+
+		strcpy(rep, "DL-REP ");
+		strcat(rep, "\n");
+		strcat(rep, dirList(path));
 		
-		dirList(path);
 		
 		// allfilenames (string), fstlstpositions (array[40] of struct {int, int}), nrnames (int)
-		return NULL;
+		return rep;
 	}
 	
 	printf("UNRECOGNIZED COMMAND!!\n");
@@ -468,8 +477,10 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	if (!fileExist(path))
 	{
 		descriptor = open(path, O_WRONLY | O_CREAT);
+
 		clientDescriptor = open(pathWithDot, O_RDWR | O_CREAT);
 		rw = pwrite(clientDescriptor, fileBuf, strlen(fileBuf), 0);
+
 		printf("Escrevendo arquivo de auth: %d\n", rw);
 		free(fileBuf);
 	}
@@ -481,10 +492,15 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		clientDescriptor = open(pathWithDot, O_RDONLY);
 		rw = pread(clientDescriptor, fileBufAux, 2*strlen(fileBuf), 0);
 		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
-		// if (clientId != client)
-		// {
-		// 	return 0;
-		// }
+
+		char* params[3];
+		for(int i = 0; (params[i] = strsep(&fileBufAux, " ")) != NULL; i++);
+
+		if (params[2][0] == 'r') {
+			if(strcmp(params[0], client) != 0) {
+				return -3;
+			}
+		}
 	}
 
 	if (nrbytes == 0)
@@ -590,11 +606,12 @@ static char* dirRemove(char* path, char* name)
 	return fullpath;
 }
 
-static void dirList(char* path)
+static char* dirList(char* path)
 {
 	char* fullpath = getDirectory();
 	int count;
 	struct dirent** nameList;
+	char* ret = malloc(BUFSIZE*(sizeof(char))); ret[0] = '\0';
 
 	printf("dirList -- path: %s\n", path);
 
@@ -611,9 +628,10 @@ static void dirList(char* path)
 
 	for(int i = 0; i < count; i ++) {
 		printf("%s\n", nameList[i]->d_name);
+		strcat(ret, nameList[i]->d_name);
+		strcat(ret, "\n");
 	}
-
-
+	return ret;
 }
 
 static char* getDirectory()
