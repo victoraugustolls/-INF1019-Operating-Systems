@@ -157,7 +157,7 @@ char* runCommand(char* command)
 
 		char* temp = fileInfo(path);
 		if(temp == NULL) {
-			return "ERROR: could not get file info"
+			return "ERROR: could not get file info";
 		}
 		strcat(rep, temp);
 		
@@ -534,8 +534,7 @@ static char* fileInfo(char* path)
 	
 	strcat(ret, " ");
 	strcat(ret, sz);
-
-	close(descriptor);
+	
 	close(clientDescriptor);
 
 	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, ret);
