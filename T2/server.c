@@ -23,7 +23,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 static char* fileInfo(char* path);
 
 static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, char* otherPerm);
-static char* dirRemove(char* path, char* name);
+static char* dirRemove(char* path, char* name, char* client);
 static char* dirList(char* path);
 
 static char* getDirectory();
@@ -195,11 +195,12 @@ char* runCommand(char* command)
 
 	if(!strcmp(params[0], "DR-REQ"))
 	{
-		if(param_num != 5)
+		if(param_num != 6)
 			return "ERROR: wrong number of parameters";
 
-		char* path = params[1];
-		char* name = params[3];
+		char* path   = params[1];
+		char* name   = params[3];
+		char* client = params[5];
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char* answer;
@@ -207,7 +208,7 @@ char* runCommand(char* command)
 
 		fullpath[0] = '\0';
 
-		answer = dirRemove(path, name);
+		answer = dirRemove(path, name, client);
 
 		printf("Answer: %s\n", answer);
 
@@ -370,6 +371,7 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 	descriptor = open(path, O_RDONLY);
 
 	bytes = pread(descriptor, payload, *nrbytes, offset);
+	printf("Bytes: %d\n", bytes);
 
 	*nrbytes = bytes;
 
@@ -377,7 +379,7 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 		return strdup("NULL");
 	}
 
-	if (bytes == -1)
+	if(bytes == -1)
 	{
 		return NULL;
 	}
@@ -387,7 +389,6 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 
 static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client, char* ownerPerm, char* otherPerm)
 {
-	FILE* new;
 	struct stat buf;
 	int descriptor;
 	int written;
@@ -489,7 +490,6 @@ static char* fileInfo(char* path)
 	int rw;
 	int descriptor;
 
-
 	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
 	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
 	strcpy(nameWithDot, ".");
@@ -511,7 +511,7 @@ static char* fileInfo(char* path)
 static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, char* otherPerm)
 {
 	struct stat st = {0};
-	char* fullpath = (char*)malloc((strlen(path) + strlen(name)) * sizeof(char));
+	char* fullpath = (char*)malloc((strlen(path) + strlen(name) + 1) * sizeof(char));
 	char* authPath;
 	char* fileBuf = (char*)malloc(BUFSIZE * sizeof(char));
 	mode_t permissao = S_IRWXU | S_IROTH | S_IWOTH | S_IXOTH;
@@ -554,9 +554,39 @@ static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, ch
 	return fullpath;
 }
 
-static char* dirRemove(char* path, char* name)
+static char* dirRemove(char* path, char* name, char* client)
 {
-	char* fullpath = getDirectory();
+	char* fullpath = (char*)malloc((strlen(path) + strlen(name) + 1) * sizeof(char));
+
+	//Client
+	char* buf = (char*)malloc((strlen(path) + strlen(name) + strlen(".directory") + 1)*sizeof(char));
+	char* auth = (char*)malloc(100*sizeof(char));
+	int clientDescriptor;
+	int rw;
+
+	strcpy(buf, path);
+	strcat(buf, "/");
+	strcat(buf, name);
+	strcat(buf, "/");
+	strcat(buf, ".directory");
+
+	printf("buf: %s\n", buf);
+
+	clientDescriptor = open(buf, O_RDONLY);
+	rw = pread(clientDescriptor, auth, strlen(auth), 0);
+	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, auth);
+
+	char* params[3];
+	for(int i = 0; (params[i] = strsep(&auth, " ")) != NULL; i++);
+
+	if(strcmp(params[0], client) != 0) {
+		free(buf);
+		free(auth);
+		return NULL;
+	}
+	free(buf);
+	free(auth);
+	//
 
 	printf("dirRemove -- path: %s, name: %s\n", path, name);
 
@@ -566,6 +596,7 @@ static char* dirRemove(char* path, char* name)
 
 	if (rmdir(fullpath) == -1)
 	{
+		printf("Erro remover diretorio!\n");
 		return NULL;
 	}
 

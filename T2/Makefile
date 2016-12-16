@@ -1,3 +1,3 @@
 make:
-	gcc -o server server.c -I.
-	gcc -o client client.c -I.
+	gcc -Wall -o server server.c -I.
+	gcc -Wall -o client client.c -I.
