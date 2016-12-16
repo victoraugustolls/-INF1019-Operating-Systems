@@ -24,7 +24,7 @@ static void fileInfo(char* path); // TODO: return type
 
 static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char* otherPerm);
 static char* dirRemove(char* path, char* name);
-static void dirList(char* path); // TODO: return type
+static char* dirList(char* path);
 
 static char* getDirectory();
 static int filesFilter(const struct dirent* nameList);
@@ -221,11 +221,16 @@ char* runCommand(char* command)
 	if(!strcmp(params[0], "DL-REQ"))
 	{
 		char* path = params[1];
+
+		char* rep = (char*)malloc(BUFFER * sizeof(char));
+
+		strcpy(rep, "DL-REP ");
+		strcat(rep, "\n");
+		strcat(rep, dirList(path));
 		
-		dirList(path);
 		
 		// allfilenames (string), fstlstpositions (array[40] of struct {int, int}), nrnames (int)
-		return NULL;
+		return rep;
 	}
 	
 	printf("UNRECOGNIZED COMMAND!!\n");
@@ -461,7 +466,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, int cli
 	{
 		descriptor = open(path, O_WRONLY | O_CREAT);
 		clientDescriptor = open(pathWithDot, O_WRONLY | O_CREAT);
-		rw = pwrite(clientDescriptor, "1", 1, 0);
+		rw = pwrite(clientDescriptor, "1", strlen("1"), 0);
 		printf("Escrevendo arquivo de auth: %d\n", rw);
 	}
 	else
@@ -579,11 +584,12 @@ static char* dirRemove(char* path, char* name)
 	return fullpath;
 }
 
-static void dirList(char* path)
+static char* dirList(char* path)
 {
 	char* fullpath = getDirectory();
 	int count;
 	struct dirent** nameList;
+	char* ret = malloc(BUFSIZE*(sizeof(char))); ret[0] = '\0';
 
 	printf("dirList -- path: %s\n", path);
 
@@ -600,9 +606,10 @@ static void dirList(char* path)
 
 	for(int i = 0; i < count; i ++) {
 		printf("%s\n", nameList[i]->d_name);
+		strcat(ret, nameList[i]->d_name);
+		strcat(ret, "\n");
 	}
-
-
+	return ret;
 }
 
 static char* getDirectory()
