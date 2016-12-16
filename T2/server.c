@@ -378,6 +378,7 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 	descriptor = open(path, O_RDONLY);
 
 	bytes = pread(descriptor, payload, *nrbytes, offset);
+
 	printf("Bytes: %d\n", bytes);
 
 	close(descriptor);
@@ -437,7 +438,6 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 
 		clientDescriptor = open(pathWithDot, O_RDWR | O_CREAT, 0666);
 		rw = pwrite(clientDescriptor, fileBuf, strlen(fileBuf), 0);
-
 		close(clientDescriptor);
 
 		printf("Escrevendo arquivo de auth: %d\n", rw);
@@ -459,6 +459,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 
 		if (params[2][0] == 'R') {
 			if(strcmp(params[0], client) != 0) {
+				close(descriptor);
 				return -3;
 			}
 		}
@@ -519,6 +520,7 @@ static char* fileInfo(char* path)
 
 	clientDescriptor = open(pathWithDot, O_RDONLY);
 	rw = pread(clientDescriptor, fileBufAux, 10, 0);
+	close(clientDescriptor);
 
 	if(rw == -1) {
 		return NULL;
@@ -584,7 +586,6 @@ static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, ch
 
 	descriptor = open(authPath, O_WRONLY | O_CREAT, 0666);
 	pwrite(descriptor, fileBuf, strlen(fileBuf), 0);
-
 	close(descriptor);
 
 	return fullpath;
