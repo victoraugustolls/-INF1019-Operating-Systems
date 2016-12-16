@@ -737,7 +737,7 @@ static char* getDirectory()
 {
 	char* currentDir = (char*)malloc(BUFFER*sizeof(char)) ;
 
-	if (getwd(currentDir) == NULL )
+	if (getcwd(currentDir, BUFFER) == NULL )
 	{
 		printf("Error getting path\n"); 
 		exit(0);
