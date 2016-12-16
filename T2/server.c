@@ -20,7 +20,7 @@
 
 static char* fileRead(char* path, int *nrbytes, int offset);
 static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client, char* ownerPerm, char* otherPerm);
-static char* fileInfo(char* path); // TODO: return type
+static char* fileInfo(char* path);
 
 static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, char* otherPerm);
 static char* dirRemove(char* path, char* name);
@@ -372,6 +372,10 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 	bytes = pread(descriptor, payload, *nrbytes, offset);
 
 	*nrbytes = bytes;
+
+	if(bytes == 0) {
+		return strdup("NULL");
+	}
 
 	if (bytes == -1)
 	{
