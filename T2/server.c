@@ -503,9 +503,22 @@ static char* fileInfo(char* path)
 	descriptor = open(path, O_WRONLY);
 	clientDescriptor = open(pathWithDot, O_RDONLY);
 	rw = pread(clientDescriptor, fileBufAux, 10, 0);
-	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
 
-	return fileBufAux;
+	char* ret = strsep(&fileBufAux, "\n");
+
+	struct stat st;
+	stat(path, &st);
+
+	char sz[20];
+	snprintf(sz, 19, "%lld", st.st_size);
+	
+	strcat(ret, " ");
+	strcat(ret, sz);
+
+	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, ret);
+
+
+	return ret;
 }
 
 static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, char* otherPerm)
