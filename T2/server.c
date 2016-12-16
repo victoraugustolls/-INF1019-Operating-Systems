@@ -586,7 +586,7 @@ static char* dirRemove(char* path, char* name, char* client)
 	printf("buf: %s\n", buf);
 
 	clientDescriptor = open(buf, O_RDONLY);
-	rw = pread(clientDescriptor, auth, strlen(auth), 0);
+	rw = pread(clientDescriptor, auth, 10, 0);
 	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, auth);
 
 	char* params[3];
