@@ -587,10 +587,21 @@ static void dirList(char* path)
 
 	printf("dirList -- path: %s\n", path);
 
-	strcat(fullpath, path);
+	if(path[1] == '/')
+		strcat(fullpath, &path[1]);
+
+	printf("%s\n", fullpath);
 
 	count = scandir(fullpath, &nameList, filesFilter, alphasort);
 	//quantidade de arquivos no diretorio
+
+	printf("%d\n", count);
+
+
+	for(int i = 0; i < count; i ++) {
+		printf("%s\n", nameList[i]->d_name);
+	}
+
 
 }
 
