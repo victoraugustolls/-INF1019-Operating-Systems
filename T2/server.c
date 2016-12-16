@@ -6,6 +6,7 @@
 #include <sys/dir.h>
 #include <stddef.h>
 #include <fcntl.h>
+#include <fts.h>
 
 #include <unistd.h>
 #include <netdb.h>
@@ -30,6 +31,7 @@ static char* getDirectory();
 static int filesFilter(const struct dirent* nameList);
 static void error(char *msg);
 static int fileExist (char* filename);
+static int recursive_delete(const char *dir);
 
 char* runCommand(char* command)
 {
@@ -373,6 +375,8 @@ static char* fileRead(char* path, int* nrbytes, int offset)
 	bytes = pread(descriptor, payload, *nrbytes, offset);
 	printf("Bytes: %d\n", bytes);
 
+	close(descriptor);
+
 	*nrbytes = bytes;
 
 	if(bytes == 0) {
@@ -429,6 +433,8 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		clientDescriptor = open(pathWithDot, O_RDWR | O_CREAT, 0666);
 		rw = pwrite(clientDescriptor, fileBuf, strlen(fileBuf), 0);
 
+		close(clientDescriptor);
+
 		printf("Escrevendo arquivo de auth: %d\n", rw);
 		free(fileBuf);
 	}
@@ -440,6 +446,8 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		clientDescriptor = open(pathWithDot, O_RDONLY);
 		rw = pread(clientDescriptor, fileBufAux, 2*strlen(fileBuf), 0);
 		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
+
+		close(clientDescriptor);
 
 		char* params[3];
 		for(int i = 0; (params[i] = strsep(&fileBufAux, " ")) != NULL; i++);
@@ -471,6 +479,8 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d, offset: %d\n", path, payload, nrbytes, offset);
 
 	written = pwrite(descriptor, payload, nrbytes, offset);
+
+	close(descriptor);
 
 	printf("Bytes written: %d\n", written);
 	
@@ -515,8 +525,10 @@ static char* fileInfo(char* path)
 	strcat(ret, " ");
 	strcat(ret, sz);
 
-	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, ret);
+	close(descriptor);
+	close(clientDescriptor);
 
+	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, ret);
 
 	return ret;
 }
@@ -564,6 +576,8 @@ static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, ch
 	descriptor = open(authPath, O_WRONLY | O_CREAT, 0666);
 	pwrite(descriptor, fileBuf, strlen(fileBuf), 0);
 
+	close(descriptor);
+
 	return fullpath;
 }
 
@@ -572,8 +586,8 @@ static char* dirRemove(char* path, char* name, char* client)
 	char* fullpath = (char*)malloc((strlen(path) + strlen(name) + 1) * sizeof(char));
 
 	//Client
-	char* buf = (char*)malloc((strlen(path) + strlen(name) + strlen(".directory") + 1)*sizeof(char));
-	char* auth = (char*)malloc(100*sizeof(char));
+	char* buf = (char*)malloc(BUFSIZE*sizeof(char));
+	char* auth = (char*)malloc(BUFSIZE*sizeof(char));
 	int clientDescriptor;
 	int rw;
 
@@ -586,11 +600,14 @@ static char* dirRemove(char* path, char* name, char* client)
 	printf("buf: %s\n", buf);
 
 	clientDescriptor = open(buf, O_RDONLY);
-	rw = pread(clientDescriptor, auth, 10, 0);
+	rw = pread(clientDescriptor, auth, strlen(buf), 0);
+	close(clientDescriptor);
 	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, auth);
 
-	char* params[3];
+	char* params[4];
 	for(int i = 0; (params[i] = strsep(&auth, " ")) != NULL; i++);
+
+	printf("client: %s\n", params[0]);
 
 	if(strcmp(params[0], client) != 0) {
 		free(buf);
@@ -607,7 +624,9 @@ static char* dirRemove(char* path, char* name, char* client)
 	strcat(fullpath, "/");
 	strcat(fullpath, name);
 
-	if (rmdir(fullpath) == -1)
+	printf("fullpath: %s\n", fullpath);
+
+	if (recursive_delete(fullpath) == -1)
 	{
 		printf("Erro remover diretorio!\n");
 		return NULL;
@@ -678,4 +697,53 @@ static int fileExist (char* filename)
 {
   struct stat buffer;   
   return stat(filename, &buffer) == 0;
+}
+
+static int recursive_delete(const char *dir)
+{
+    int ret = 0;
+    FTS *ftsp = NULL;
+    FTSENT *curr;
+    char *files[] = { (char *) dir, NULL };
+
+    ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
+    if (!ftsp) {
+        ret = -1;
+        goto finish;
+    }
+
+    while ((curr = fts_read(ftsp))) {
+    	printf("dentro do while\n");
+        switch (curr->fts_info) {
+        case FTS_NS:
+        case FTS_DNR:
+        case FTS_ERR:
+            break;
+
+        case FTS_DC:
+        case FTS_DOT:
+        case FTS_NSOK:
+            break;
+
+        case FTS_D:
+            break;
+
+        case FTS_DP:
+        case FTS_F:
+        case FTS_SL:
+        case FTS_SLNONE:
+        case FTS_DEFAULT:
+            if (remove(curr->fts_accpath) < 0) {
+                ret = -1;
+            }
+            break;
+        }
+    }
+
+    finish:
+    if (ftsp) {
+        fts_close(ftsp);
+    }
+
+    return ret;
 }
