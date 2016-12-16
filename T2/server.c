@@ -522,8 +522,8 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		// }
 
 
-		free(fileBuf);
-		free(fileBufAux);
+		// free(fileBuf);
+		// free(fileBufAux);
 	}
 
 	if (nrbytes == 0)
