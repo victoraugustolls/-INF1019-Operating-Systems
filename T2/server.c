@@ -476,9 +476,9 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	
 	if (!fileExist(path))
 	{
-		descriptor = open(path, O_WRONLY | O_CREAT);
+		descriptor = open(path, O_WRONLY | O_CREAT | 0777);
 
-		clientDescriptor = open(pathWithDot, O_RDWR | O_CREAT);
+		clientDescriptor = open(pathWithDot, O_RDWR | O_CREAT | 0777);
 		rw = pwrite(clientDescriptor, fileBuf, strlen(fileBuf), 0);
 
 		printf("Escrevendo arquivo de auth: %d\n", rw);
