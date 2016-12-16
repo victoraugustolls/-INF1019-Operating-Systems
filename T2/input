@@ -1,5 +1,2 @@
-DC-REQ . 5 teste2 5
-WR-REQ ./teste3.txt 12 teste 5 10 1
-WR-REQ ./newDir/teste3.txt 12 teste 5 10 1
-RD-REQ ./teste3.txt 12 100 0 1
-RD-REQ ./teste3.txt 12 100 0 2
+WR-REQ ./teste3.txt 12 teste 5 10 1 W W
+WR-REQ ./teste3.txt 12 teste 5 10 1 W W
