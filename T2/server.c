@@ -53,7 +53,7 @@ char* runCommand(char* command)
 			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
-		int len = atoi(params[2]);
+		// int len = atoi(params[2]);
 		char* payload;
 		int nrbytes = atoi(params[3]);
 		int offset = atoi(params[4]);
@@ -100,7 +100,7 @@ char* runCommand(char* command)
 			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
-		int len = atoi(params[2]);
+		// int len = atoi(params[2]);
 		char* payload = params[3];
 		int nrbytes = atoi(params[4]);
 		int offset = atoi(params[5]);
@@ -271,9 +271,6 @@ static void runServer(int port)
     int optval; /* flag value for setsockopt */
     int n; /* message byte size */
     
-    char name[BUFSIZE];   // name of the file received from client
-    int cmd;              // cmd received from client
-    
     portno = port;
     
     /* 
@@ -414,7 +411,6 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	char* name;
 	char* aux;
 	char* fileBuf = (char*)malloc(BUFSIZE * sizeof(char));
-	int clientId;
 	int clientDescriptor;
 	int rw;
 
@@ -464,9 +460,6 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 
 
 	//
-
-
-	char* fileBufAux = (char*)malloc(BUFSIZE * sizeof(char));
 
 	
 	if (!fileExist(path))
@@ -561,7 +554,6 @@ static char* fileInfo(char* path)
 	char* nameWithDot;
 	char* name;
 	char* aux;
-	int clientId;
 	int clientDescriptor;
 	int rw;
 	//int descriptor;
