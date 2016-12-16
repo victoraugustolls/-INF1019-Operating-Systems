@@ -119,7 +119,11 @@ char* runCommand(char* command)
 		if (nrbytes == -1)
 		{
 			printf("Error writing in file\n");
-			return NULL;
+			return "Error writing in file\n";
+		}
+		if(nrbytes == -3) {
+			printf("ERROR: permission denied\n");
+			return "ERROR: permission denied\n";
 		}
 
 		snprintf(lenPath, 20, "%lu", strlen(path));
@@ -488,10 +492,15 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		clientDescriptor = open(pathWithDot, O_RDONLY);
 		rw = pread(clientDescriptor, fileBufAux, 2*strlen(fileBuf), 0);
 		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
-		// if (clientId != client)
-		// {
-		// 	return 0;
-		// }
+
+		char* params[3];
+		for(int i = 0; (params[i] = strsep(&fileBufAux, " ")) != NULL; i++);
+
+		if (params[2] == 'r') {
+			if(strcmp(params[0], client) != 0) {
+				return -3;
+			}
+		}
 	}
 
 	if (nrbytes == 0)
