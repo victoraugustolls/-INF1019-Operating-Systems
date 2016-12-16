@@ -20,7 +20,7 @@
 
 static char* fileRead(char* path, int *nrbytes, int offset);
 static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client, char* ownerPerm, char* otherPerm);
-static void fileInfo(char* path); // TODO: return type
+static char* fileInfo(char* path); // TODO: return type
 
 static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, char* otherPerm);
 static char* dirRemove(char* path, char* name);
@@ -147,10 +147,15 @@ char* runCommand(char* command)
 	{
 		char* path = params[1];
 
-		fileInfo(path);
+		char* rep = (char*)malloc(BUFFER * sizeof(char));
+
+		strcpy(rep, "FI-REP ");
+		strcat(rep, path);
+		strcat(rep, " ");
+		strcat(rep, fileInfo(path));
 		
 		// path (string), strlen(int), owner(int), permissions (2char), filelength (int)
-		return NULL;
+		return rep;
 	}
 	
 	if(!strcmp(params[0], "DC-REQ"))
@@ -467,18 +472,36 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	return written;
 }
 
-static void fileInfo(char* path)
+static char* fileInfo(char* path)
 {
-	struct stat sb;
-	char* fullPath = getDirectory();
+	//Client
+	char* pathdup = strdup(path);
+	char pathWithDot[BUFFER];
+	char* nameWithDot;
+	char* name;
+	char* aux;
+	int clientId;
+	int clientDescriptor;
+	int rw;
+	int descriptor;
 
-	printf("fileInfo -- path: %s\n", path);
 
-	strcat(fullPath, path);
+	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
+	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
+	strcpy(nameWithDot, ".");
+	strcat(nameWithDot, name);
+	strcpy(pathWithDot, path);
+	pathWithDot[strlen(pathWithDot) - strlen(name)] = '\0';
+	strcat(pathWithDot, nameWithDot);
 
-	stat(fullPath, &sb);
+	char* fileBufAux = (char*)malloc(BUFSIZE * sizeof(char));
 
-	return;
+	descriptor = open(path, O_WRONLY);
+	clientDescriptor = open(pathWithDot, O_RDONLY);
+	rw = pread(clientDescriptor, fileBufAux, 10, 0);
+	printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
+
+	return fileBufAux;
 }
 
 static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, char* otherPerm)
