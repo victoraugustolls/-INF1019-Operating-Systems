@@ -628,6 +628,9 @@ static char* dirList(char* path)
 
 	for(int i = 0; i < count; i ++) {
 		printf("%s\n", nameList[i]->d_name);
+		if (nameList[i]->d_type == DT_DIR) {
+			strcat(ret, "    ");
+		}
 		strcat(ret, nameList[i]->d_name);
 		strcat(ret, "\n");
 	}
@@ -649,7 +652,7 @@ static char* getDirectory()
 
 static int filesFilter(const struct dirent* nameList)
 {
-	if ((nameList->d_type == DT_DIR) || (strcmp(nameList->d_name, ".") == 0) || (strcmp(nameList->d_name, "..") == 0) )  
+	if ((strcmp(nameList->d_name, ".") == 0) || (strcmp(nameList->d_name, "..") == 0) || (nameList->d_name[0] == '.'))  
 		return 0; 
 	else
 		return 1;
