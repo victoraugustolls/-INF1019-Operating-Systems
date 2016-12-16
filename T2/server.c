@@ -476,9 +476,9 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	
 	if (!fileExist(path))
 	{
-		descriptor = open(path, O_WRONLY | O_CREAT | 0777);
+		descriptor = open(path, O_WRONLY | O_CREAT);
 
-		clientDescriptor = open(pathWithDot, O_RDWR | O_CREAT | 0777);
+		clientDescriptor = open(pathWithDot, O_RDWR | O_CREAT | 0666);
 		rw = pwrite(clientDescriptor, fileBuf, strlen(fileBuf), 0);
 
 		printf("Escrevendo arquivo de auth: %d\n", rw);
@@ -489,7 +489,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		char* fileBufAux = (char*)malloc(BUFSIZE * sizeof(char));
 
 		descriptor = open(path, O_WRONLY);
-		clientDescriptor = open(pathWithDot, O_RDONLY);
+		clientDescriptor = open(pathWithDot, O_RDONLY | 0666);
 		rw = pread(clientDescriptor, fileBufAux, 2*strlen(fileBuf), 0);
 		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
 
