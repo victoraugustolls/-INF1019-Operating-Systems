@@ -496,7 +496,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		char* params[3];
 		for(int i = 0; (params[i] = strsep(&fileBufAux, " ")) != NULL; i++);
 
-		if (params[2][0] == 'r') {
+		if (params[2][0] == 'R') {
 			if(strcmp(params[0], client) != 0) {
 				return -3;
 			}
