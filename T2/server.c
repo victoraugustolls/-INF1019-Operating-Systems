@@ -154,7 +154,12 @@ char* runCommand(char* command)
 		strcpy(rep, "FI-REP ");
 		strcat(rep, path);
 		strcat(rep, " ");
-		strcat(rep, fileInfo(path));
+
+		char* temp = fileInfo(path);
+		if(temp == NULL) {
+			return "ERROR: could not get file info"
+		}
+		strcat(rep, temp);
 		
 		// path (string), strlen(int), owner(int), permissions (2char), filelength (int)
 		return rep;
@@ -498,7 +503,7 @@ static char* fileInfo(char* path)
 	int clientId;
 	int clientDescriptor;
 	int rw;
-	int descriptor;
+	//int descriptor;
 
 	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
 	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
@@ -510,9 +515,14 @@ static char* fileInfo(char* path)
 
 	char* fileBufAux = (char*)malloc(BUFSIZE * sizeof(char));
 
-	descriptor = open(path, O_WRONLY);
+	printf("%s\n", pathWithDot);
+
 	clientDescriptor = open(pathWithDot, O_RDONLY);
 	rw = pread(clientDescriptor, fileBufAux, 10, 0);
+
+	if(rw == -1) {
+		return NULL;
+	}
 
 	char* ret = strsep(&fileBufAux, "\n");
 
