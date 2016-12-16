@@ -19,7 +19,7 @@
 
 
 static char* fileRead(char* path, int *nrbytes, int offset, int client);
-static int fileWrite(char* path, char* payload, int nrbytes, int offset, int client);
+static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client, char* ownerPerm, char* otherPerm);
 static void fileInfo(char* path); // TODO: return type
 
 static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char* otherPerm);
@@ -33,12 +33,12 @@ static int fileExist (char* filename);
 
 char* runCommand(char* command)
 {
-	char* params[8];
+	char* params[10];
 
 	int param_num = 0;
 	for(int i = 0; (params[i] = strsep(&command, " ")) != NULL; i++, param_num++)
 	{
-		if(i==7)
+		if(i == 11)
 			return "ERROR: to many parameters!";
 	}
 
@@ -95,7 +95,7 @@ char* runCommand(char* command)
 	if(!strcmp(params[0], "WR-REQ"))
 	{
 		//return NULL;
-		if(param_num != 7)
+		if(param_num != 9)
 			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
@@ -103,7 +103,9 @@ char* runCommand(char* command)
 		char* payload = params[3];
 		int nrbytes = atoi(params[4]);
 		int offset = atoi(params[5]);
-		int client = atoi(params[6]);
+		char* client = params[6];
+		char* owner = params[7];
+		char* others = params[8];
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char lenPath[BUFFER];
@@ -111,7 +113,7 @@ char* runCommand(char* command)
 
 		fullpath[0] = '\0';
 		
-		nrbytes = fileWrite(path, payload, nrbytes, offset, client);
+		nrbytes = fileWrite(path, payload, nrbytes, offset, client, owner, others);
 		printf("Bytes Written Response: %d\n", nrbytes);
 
 		if (nrbytes == -1)
@@ -432,7 +434,7 @@ static char* fileRead(char* path, int* nrbytes, int offset, int client)
 	return payload;
 }
 
-static int fileWrite(char* path, char* payload, int nrbytes, int offset, int client)
+static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client, char* ownerPerm, char* otherPerm)
 {
 	FILE* new;
 	struct stat buf;
@@ -459,22 +461,33 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, int cli
 	pathWithDot[strlen(pathWithDot) - strlen(name)] = '\0';
 	strcat(pathWithDot, nameWithDot);
 
+	strcpy(fileBuf, client);
+	strcat(fileBuf, " ");
+	strcat(fileBuf, ownerPerm);
+	strcat(fileBuf, " ");
+	strcat(fileBuf, otherPerm);
+
 	printf("path: %s / pathWithDot: %s / name: %s\n", path, pathWithDot, name);
 	//
 	
 	if (!fileExist(path))
 	{
 		descriptor = open(path, O_WRONLY | O_CREAT);
-		clientDescriptor = open(pathWithDot, O_WRONLY | O_CREAT);
-		rw = pwrite(clientDescriptor, "1", strlen("1"), 0);
+
+		clientDescriptor = open(pathWithDot, O_RDWR | O_CREAT);
+		rw = pwrite(clientDescriptor, fileBuf, strlen(fileBuf), 0);
+
 		printf("Escrevendo arquivo de auth: %d\n", rw);
+		free(fileBuf);
 	}
 	else
 	{
+		char* fileBufAux = (char*)malloc(BUFSIZE * sizeof(char));
+
 		descriptor = open(path, O_WRONLY);
 		clientDescriptor = open(pathWithDot, O_RDONLY);
-		rw = pread(clientDescriptor, fileBuf, 10, 0);
-		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBuf);
+		rw = pread(clientDescriptor, fileBufAux, 2*strlen(fileBuf), 0);
+		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
 		// if (clientId != client)
 		// {
 		// 	return 0;
