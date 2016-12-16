@@ -18,11 +18,11 @@
 #define BUFSIZE 1024
 
 
-static char* fileRead(char* path, int *nrbytes, int offset, int client);
+static char* fileRead(char* path, int *nrbytes, int offset);
 static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* client, char* ownerPerm, char* otherPerm);
 static void fileInfo(char* path); // TODO: return type
 
-static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char* otherPerm);
+static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, char* otherPerm);
 static char* dirRemove(char* path, char* name);
 static char* dirList(char* path);
 
@@ -47,7 +47,7 @@ char* runCommand(char* command)
     printf("PARAM %d\n", param_num);
 	if(!strcmp(params[0], "RD-REQ"))
 	{
-		if(param_num != 6)
+		if(param_num != 5)
 			return "ERROR: wrong number of parameters";
 
 		char* path = params[1];
@@ -55,7 +55,6 @@ char* runCommand(char* command)
 		char* payload;
 		int nrbytes = atoi(params[3]);
 		int offset = atoi(params[4]);
-		int client = atoi(params[5]);
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char lenPath[20];
@@ -63,7 +62,7 @@ char* runCommand(char* command)
 
 		fullpath[0] = '\0';
 		
-		payload = fileRead(path, &nrbytes, offset, client);
+		payload = fileRead(path, &nrbytes, offset);
 		printf("Payload: %s\n", payload);
 
 		if (payload == NULL)
@@ -154,13 +153,16 @@ char* runCommand(char* command)
 		return NULL;
 	}
 	
-	if(!strcmp(params[0], "DC-REQ")) // OK!
+	if(!strcmp(params[0], "DC-REQ"))
 	{
-		if(param_num != 5)
+		if(param_num != 7)
 			return "ERROR: wrong number of parameters\n";
 
 		char* path = params[1];
 		char* name = params[3];
+		char* client = params[4];
+		char* owner = params[5];
+		char* others = params[6];
 
 		char* fullpath = (char*)malloc(BUFFER * sizeof(char));
 		char* answer;
@@ -168,7 +170,7 @@ char* runCommand(char* command)
 
 		fullpath[0] = '\0';
 		
-		answer = dirCreate(path, name, 1, "W", "W");
+		answer = dirCreate(path, name, client, owner, others);
 
 		if(answer == NULL) {
 			printf("Error creating directory\n");
@@ -186,7 +188,7 @@ char* runCommand(char* command)
 		return fullpath;
 	}
 
-	if(!strcmp(params[0], "DR-REQ")) // OK!
+	if(!strcmp(params[0], "DR-REQ"))
 	{
 		if(param_num != 5)
 			return "ERROR: wrong number of parameters";
@@ -337,45 +339,6 @@ static void runServer(int port)
 
 int main(int argc, char **argv)
 {
-	char* command;
-	/*
-	// path(string), strlen(int), payload (string vazio), nrbytes(int), offset(int)
-	command = strdup("RD-REQ path/to/file 5 5 0");
-	runCommand(command);
-	free(command);
-	
-	// path(string), strlen(int), payload(string), nrbytes(int), offset(int)
-	command = strdup("WR-REQ path/to/file 5 loadpay 5 0");
-	runCommand(command);
-	free(command);
-	
-	
-	// path (string), strlen(int)
-	command = strdup("FI-REQ path/to/file 5");
-	runCommand(command);
-	free(command);
-
-	
-	// path(string), strlen(int), dirname(string), strlen(int)
-	command = strdup("DC-REQ . 5 newDir 5");
-	runCommand(command);
-	free(command);
-
-	
-	// path (string), strlen(int), dirname(string), strlen(int)
-	command = strdup("DR-REQ path/to/file 5 killDir 5");
-	runCommand(command);
-	free(command);
-
-	
-	// path(string), strlen(int)
-	command = strdup("DL-REQ path/to/file 5");
-	runCommand(command);
-	free(command);
-
-    */
-
-
     /* 
      * check command line arguments 
      */
@@ -391,36 +354,11 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-static char* fileRead(char* path, int* nrbytes, int offset, int client)
+static char* fileRead(char* path, int* nrbytes, int offset)
 {
-	FILE* control;
 	char *payload = (char*)malloc(BUFSIZE * sizeof(char));
 	int descriptor;
 	int bytes;
-
-	//Check client
-	int clientId;
-	char* pathdup = strdup(path);
-	char* nameWithDot;
-	char* name;
-	char* aux;
-
-	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
-
-	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
-	strcpy(nameWithDot, ".");
-	strcat(nameWithDot, name);
-
-	control = fopen(nameWithDot, "rb");
-	fscanf(control, "%d", &clientId);
-	if (clientId != client)
-	{
-		fclose(control);
-		*nrbytes = 0;
-		return "Cliente nao autorizado";
-	}
-	fclose(control);
-	//
 
 	printf("fileRead -- path: %s, nrbytes: %d, offset: %d\n", path, *nrbytes, offset);
 
@@ -501,6 +439,8 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 				return -3;
 			}
 		}
+		free(fileBuf);
+		free(fileBufAux);
 	}
 
 	if (nrbytes == 0)
@@ -541,12 +481,12 @@ static void fileInfo(char* path)
 	return;
 }
 
-static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char* otherPerm)
+static char* dirCreate(char* path, char* name, char* client, char* ownerPerm, char* otherPerm)
 {
 	struct stat st = {0};
 	char* fullpath = (char*)malloc((strlen(path) + strlen(name)) * sizeof(char));
 	char* authPath;
-	char  buf[20];
+	char* fileBuf = (char*)malloc(BUFSIZE * sizeof(char));
 	mode_t permissao = S_IRWXU | S_IROTH | S_IWOTH | S_IXOTH;
 	int descriptor;
 
@@ -557,8 +497,7 @@ static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char
 	strcat(fullpath, name);
 
 	authPath = strdup(fullpath);
-	strcat(authPath, "/.");
-	strcat(authPath, name);
+	strcat(authPath, "/.directory");
 
 	if (stat(fullpath, &st) == -1) 
 	{
@@ -574,16 +513,16 @@ static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char
 		return NULL;
 	}
 
-	snprintf(buf, 20, "%d", client);
-	strcat(buf, " ");
-	strcat(buf, ownerPerm);
-	strcat(buf, " ");
-	strcat(buf, otherPerm);
+	strcpy(fileBuf, client);
+	strcat(fileBuf, " ");
+	strcat(fileBuf, ownerPerm);
+	strcat(fileBuf, " ");
+	strcat(fileBuf, otherPerm);
 
-	printf("Buffer: %s\n", buf);
+	printf("Buffer: %s\n", fileBuf);
 
-	descriptor = open(authPath, O_WRONLY | O_CREAT);
-	pwrite(descriptor, buf, 6, 0);
+	descriptor = open(authPath, O_WRONLY | O_CREAT, 0666);
+	pwrite(descriptor, fileBuf, strlen(fileBuf), 0);
 
 	return fullpath;
 }
