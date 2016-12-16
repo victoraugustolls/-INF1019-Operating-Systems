@@ -332,6 +332,9 @@ static void runServer(int port)
     
         printf("Server received datagram from %s (%s)\n",  hostp->h_name, hostaddrp);
         printf("Server received %lu/%d bytes: %s\n", strlen(buf), n, buf);
+        
+        if(buf[0] == '#')
+        	continue;
 
         char* reply;
         if( !(reply = runCommand(strdup(buf)))) {
@@ -415,12 +418,19 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	int clientDescriptor;
 	int rw;
 
+	char dirPath[40]; dirPath[0] = '\0';
+
+
 	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
 	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
 	strcpy(nameWithDot, ".");
 	strcat(nameWithDot, name);
 	strcpy(pathWithDot, path);
 	pathWithDot[strlen(pathWithDot) - strlen(name)] = '\0';
+
+	strcpy(dirPath, pathWithDot);
+	strcat(dirPath, ".directory");
+
 	strcat(pathWithDot, nameWithDot);
 
 	strcpy(fileBuf, client);
@@ -429,8 +439,35 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 	strcat(fileBuf, " ");
 	strcat(fileBuf, otherPerm);
 
-	printf("path: %s / pathWithDot: %s / name: %s\n", path, pathWithDot, name);
+	printf("path: %s / pathWithDot: %s / name: %s / dirPath: %s\n ", path, pathWithDot, name, dirPath);
+
+	char* dirBufAux = (char*)malloc(BUFSIZE * sizeof(char));
+
+	int dirDescriptor = open(dirPath, O_RDONLY);
+	rw = pread(dirDescriptor, dirBufAux, 10, 0);
+	if(rw > 0) {
+		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, dirBufAux);
+
+		char* params[3];
+
+		for(int i = 0; (params[i] = strsep(&dirBufAux, " ")) != NULL; i++);
+
+		if (params[2][0] == 'R') {
+			if(strcmp(params[0], client) != 0) {
+				return -3;
+			}
+		}
+
+	}
+	close(dirDescriptor);
+
+
+
 	//
+
+
+	char* fileBufAux = (char*)malloc(BUFSIZE * sizeof(char));
+
 	
 	if (!fileExist(path))
 	{
@@ -464,25 +501,25 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 			}
 		}
 
-		fileBufAux[0] = '\0';
+		// fileBufAux[0] = '\0';
 
-		char dirPath[20];
-		strcpy(dirPath, path);
-		strcat(dirPath, ".directory");
+		// char dirPath[20];
+		// strcpy(dirPath, path);
+		// strcat(dirPath, ".directory");
 
-		int dirDescriptor = open(dirPath, O_WRONLY);
-		rw = pread(dirDescriptor, fileBufAux, 2*strlen(fileBuf), 0);
-		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
-		close(dirDescriptor);
+		// int dirDescriptor = open(dirPath, O_WRONLY);
+		// rw = pread(dirDescriptor, fileBufAux, 2*strlen(fileBuf), 0);
+		// printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
+		// close(dirDescriptor);
 
-		for(int i = 0; (params[i] = strsep(&fileBufAux, " ")) != NULL; i++);
+		// for(int i = 0; (params[i] = strsep(&fileBufAux, " ")) != NULL; i++);
 
-		if (params[2][0] == 'R') {
-			if(strcmp(params[0], client) != 0) {
-				close(descriptor);
-				return -3;
-			}
-		}
+		// if (params[2][0] == 'R') {
+		// 	if(strcmp(params[0], client) != 0) {
+		// 		close(descriptor);
+		// 		return -3;
+		// 	}
+		// }
 
 
 		free(fileBuf);

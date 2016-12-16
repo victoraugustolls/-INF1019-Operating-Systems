@@ -70,6 +70,11 @@ int main(int argc, char **argv)
             break;
         }
         printf("Command: %s\n", buf);
+        if(buf[0] == '#') {
+            printf("Ignoring command\n");
+            continue;
+        }
+
 
         /* send the message to the server */
         serverlen = sizeof(serveraddr);
