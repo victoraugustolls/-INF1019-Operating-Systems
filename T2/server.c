@@ -463,6 +463,28 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 				return -3;
 			}
 		}
+
+		fileBufAux[0] = '\0';
+
+		char dirPath[20];
+		strcpy(dirPath, path);
+		strcat(dirPath, ".directory");
+
+		int dirDescriptor = open(dirPath, O_WRONLY);
+		rw = pread(dirDescriptor, fileBufAux, 2*strlen(fileBuf), 0);
+		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBufAux);
+		close(dirDescriptor);
+
+		for(int i = 0; (params[i] = strsep(&fileBufAux, " ")) != NULL; i++);
+
+		if (params[2][0] == 'R') {
+			if(strcmp(params[0], client) != 0) {
+				close(descriptor);
+				return -3;
+			}
+		}
+
+
 		free(fileBuf);
 		free(fileBufAux);
 	}
@@ -473,6 +495,7 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, char* c
 		{
 			printf("Error deleting file: %s\n", path);
 		}
+		remove(pathWithDot);
 
 		return 0;
 	}
@@ -516,7 +539,12 @@ static char* fileInfo(char* path)
 
 	char* fileBufAux = (char*)malloc(BUFSIZE * sizeof(char));
 
-	printf("%s\n", pathWithDot);
+	printf("%d\n", strcmp(pathWithDot, "./newDir/.teste.txt"));
+
+	if(pathWithDot[strlen(pathWithDot)] == '\n') {
+		printf("bananas\n");
+	}
+	
 
 	clientDescriptor = open(pathWithDot, O_RDONLY);
 	rw = pread(clientDescriptor, fileBufAux, 10, 0);
