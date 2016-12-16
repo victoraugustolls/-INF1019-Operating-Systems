@@ -437,54 +437,43 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, int cli
 
 	//Client
 	char* pathdup = strdup(path);
+	char pathWithDot[BUFFER];
 	char* nameWithDot;
 	char* name;
 	char* aux;
+	char* fileBuf = (char*)malloc(BUFSIZE * sizeof(char));
 	int clientId;
+	int clientDescriptor;
+	int rw;
 
 	while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
 	nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
 	strcpy(nameWithDot, ".");
 	strcat(nameWithDot, name);
+	strcpy(pathWithDot, path);
+	pathWithDot[strlen(pathWithDot) - strlen(name)] = '\0';
+	strcat(pathWithDot, nameWithDot);
+
+	printf("path: %s / pathWithDot: %s / name: %s\n", path, pathWithDot, name);
 	//
 	
 	if (!fileExist(path))
 	{
-		printf("bananas\n");
-		char* pathdup = strdup(path);
-		char pathWithDot[BUFFER];
-		char* nameWithDot;
-		char* name;
-		char* aux;
-
-		while((aux = strsep(&pathdup, "/")) != NULL) name = aux;
-
-		nameWithDot = (char*)malloc((strlen(name)+2)*sizeof(char));
-		strcpy(nameWithDot, ".");
-		strcat(nameWithDot, name);
-
-		strcpy(pathWithDot, path);
-		pathWithDot[strlen(pathWithDot) - strlen(name)] = '\0';
-		strcat(pathWithDot, nameWithDot);
-
-		printf("path: %s / pathWithDot: %s / name: %s\n", path, pathWithDot, name);
-
-		new = fopen(path, "wb");
-		fclose(new);
-		new = fopen(pathWithDot, "wb");
-		fprintf(new, "%d", client);
-		fclose(new);
+		descriptor = open(path, O_WRONLY | O_CREAT);
+		clientDescriptor = open(pathWithDot, O_WRONLY | O_CREAT);
+		rw = pwrite(clientDescriptor, "1", 1, 0);
+		printf("Escrevendo arquivo de auth: %d\n", rw);
 	}
 	else
 	{
-		new = fopen(nameWithDot, "rb");
-		fscanf(new, "%d", &clientId);
-		if (clientId != client)
-		{
-			fclose(new);
-			return 0;
-		}
-		fclose(new);
+		descriptor = open(path, O_WRONLY);
+		clientDescriptor = open(pathWithDot, O_RDONLY);
+		rw = pread(clientDescriptor, fileBuf, 10, 0);
+		printf("Lendo arquivo de auth: %d / valor: %s\n", rw, fileBuf);
+		// if (clientId != client)
+		// {
+		// 	return 0;
+		// }
 	}
 
 	if (nrbytes == 0)
@@ -503,10 +492,6 @@ static int fileWrite(char* path, char* payload, int nrbytes, int offset, int cli
 	offset = size < offset ? size : offset;
 
 	printf("fileWrite -- path: %s, payload: %s, nrbytes: %d, offset: %d\n", path, payload, nrbytes, offset);
-
-	descriptor = open(path, O_WRONLY);
-
-	printf("Passed descriptor\n");
 
 	written = pwrite(descriptor, payload, nrbytes, offset);
 
