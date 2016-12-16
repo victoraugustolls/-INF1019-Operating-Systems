@@ -22,7 +22,7 @@ static char* fileRead(char* path, int *nrbytes, int offset, int client);
 static int fileWrite(char* path, char* payload, int nrbytes, int offset, int client);
 static void fileInfo(char* path); // TODO: return type
 
-static char* dirCreate(char* path, char* name);
+static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char* otherPerm);
 static char* dirRemove(char* path, char* name);
 static void dirList(char* path); // TODO: return type
 
@@ -162,7 +162,7 @@ char* runCommand(char* command)
 
 		fullpath[0] = '\0';
 		
-		answer = dirCreate(path, name);
+		answer = dirCreate(path, name, 1, "W", "W");
 
 		if(answer == NULL) {
 			printf("Error creating directory\n");
@@ -529,17 +529,24 @@ static void fileInfo(char* path)
 	return;
 }
 
-static char* dirCreate(char* path, char* name)
+static char* dirCreate(char* path, char* name, int client, char* ownerPerm, char* otherPerm)
 {
 	struct stat st = {0};
 	char* fullpath = (char*)malloc((strlen(path) + strlen(name)) * sizeof(char));
+	char* authPath;
+	char  buf[20];
 	mode_t permissao = S_IRWXU | S_IROTH | S_IWOTH | S_IXOTH;
+	int descriptor;
 
 	printf("dirCreate -- path: %s, name: %s, fullpath: %s\n", path, name, fullpath);
 
 	strcpy(fullpath, path);
 	strcat(fullpath, "/");
 	strcat(fullpath, name);
+
+	authPath = strdup(fullpath);
+	strcat(authPath, "/.");
+	strcat(authPath, name);
 
 	if (stat(fullpath, &st) == -1) 
 	{
@@ -554,6 +561,17 @@ static char* dirCreate(char* path, char* name)
 		printf("Stat error\n");
 		return NULL;
 	}
+
+	snprintf(buf, 20, "%d", client);
+	strcat(buf, " ");
+	strcat(buf, ownerPerm);
+	strcat(buf, " ");
+	strcat(buf, otherPerm);
+
+	printf("Buffer: %s\n", buf);
+
+	descriptor = open(authPath, O_WRONLY | O_CREAT);
+	pwrite(descriptor, buf, 6, 0);
 
 	return fullpath;
 }
